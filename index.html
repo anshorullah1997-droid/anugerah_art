@@ -300,6 +300,38 @@
             color: #fde68a !important;
         }
 
+        /* Kartu & Filter Portofolio Adaptif Siang/Malam */
+        .portfolio-card {
+            background-color: #ffffff;
+            border: 1.5px solid rgba(251, 191, 36, 0.45);
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .portfolio-card:hover {
+            transform: translateY(-4px);
+            border-color: #fbbf24;
+            box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.35);
+        }
+        #anugerah-fullpage-root.dark-mode .portfolio-card {
+            background-color: #1b120b !important;
+            border-color: rgba(245, 158, 11, 0.35) !important;
+        }
+        .portfolio-filter-pill {
+            background-color: rgba(255, 255, 255, 0.12);
+            color: #fef3c7 !important;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            transition: all 0.2s ease;
+        }
+        .portfolio-filter-pill:hover {
+            background-color: rgba(251, 191, 36, 0.25);
+            border-color: #fbbf24;
+        }
+        .portfolio-filter-pill.active {
+            background-color: #fbbf24 !important;
+            color: #1f0e05 !important;
+            border-color: #fde68a !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
         /* Auto-Contrast ketika Admin memilih warna kartu utama yang sangat terang */
         .theme-bg-pattern.light-surface-card h1,
         .theme-bg-pattern.light-surface-card h2:not(.keep-accent),
@@ -749,7 +781,7 @@ begin
   select exists (select 1 from storage.buckets where id = 'anugerah_media' and public = true) into v_bk;
   select count(*) into v_ws from public.anugerah_store;
   select count(*) into v_sn from public.anugerah_store_history;
-  return jsonb_build_object('status', 'ok', 'version', '2.2-pro', 'realtime_enabled', v_rt, 'storage_bucket_ready', v_bk, 'workspace_count', v_ws, 'snapshot_count', v_sn, 'server_time', now());
+  return jsonb_build_object('status', 'ok', 'version', '2.3-pro', 'realtime_enabled', v_rt, 'storage_bucket_ready', v_bk, 'workspace_count', v_ws, 'snapshot_count', v_sn, 'server_time', now());
 end; $$;
 grant execute on function public.get_backend_health() to anon, authenticated;
 
@@ -768,7 +800,7 @@ on conflict (id) do update set public = true, file_size_limit = 10485760;
 drop policy if exists "Public Read anugerah_media" on storage.objects;
 create policy "Public Read anugerah_media" on storage.objects for select to anon, authenticated using (bucket_id = 'anugerah_media');
 drop policy if exists "Public Upload anugerah_media" on storage.objects;
-create policy "Public Upload anugerah_media" on storage.objects for insert to anon, authenticated with check (bucket_id = 'anugerah_media' and name ~ '^hd_[0-9]+_[a-z0-9]+\.(webp|png|jpg|jpeg)$');
+create policy "Public Upload anugerah_media" on storage.objects for insert to anon, authenticated with check (bucket_id = 'anugerah_media' and name ~ '^(hd|pf)_[0-9]+_[a-z0-9]+\.(webp|png|jpg|jpeg)$');
 drop policy if exists "Public Update anugerah_media" on storage.objects;
 drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 </div>
@@ -835,6 +867,10 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     <a id="nav-link-digital" href="#sec-digital" class="nav-menu-pill px-3.5 py-2 rounded-full bg-white/10 hover:bg-amber-400 hover:text-espresso-950 text-white text-[11px] sm:text-xs font-bold transition flex items-center gap-1.5 border border-white/15 shadow-sm">
                         <i class="fas fa-cloud-download-alt text-amber-300"></i>
                         <span>Produk Digital</span>
+                    </a>
+                    <a id="nav-link-portofolio" href="#sec-portofolio" class="nav-menu-pill px-3.5 py-2 rounded-full bg-white/10 hover:bg-amber-400 hover:text-espresso-950 text-white text-[11px] sm:text-xs font-bold transition flex items-center gap-1.5 border border-white/15 shadow-sm">
+                        <i class="fas fa-photo-video text-amber-300"></i>
+                        <span>Portofolio</span>
                     </a>
                     <a href="#sec-workshop" class="nav-menu-pill px-3.5 py-2 rounded-full bg-white/10 hover:bg-amber-400 hover:text-espresso-950 text-white text-[11px] sm:text-xs font-bold transition flex items-center gap-1.5 border border-white/15 shadow-sm">
                         <i class="fas fa-store text-amber-300"></i>
@@ -1056,11 +1092,116 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             </section>
 
             <!-- ============================================================= -->
-            <!-- SECTION 7: BLOK / SECTION KUSTOM TAMBAHAN (UI BUILDER)        -->
+            <!-- SECTION 7: GALERI PORTOFOLIO HASIL CETAK (RATUSAN FOTO HD)    -->
+            <!-- ============================================================= -->
+            <section id="sec-portofolio" class="theme-bg-pattern wood-pattern rounded-3xl p-5 sm:p-9 shadow-2xl border-2 border-amber-900/50 scroll-mt-4">
+                <div class="text-center max-w-2xl mx-auto mb-6 space-y-2.5">
+                    <div class="inline-flex items-center gap-2 bg-white text-espresso-950 text-[10px] sm:text-xs font-extrabold tracking-widest uppercase px-4 py-1.5 rounded-full shadow">
+                        <i class="fas fa-award text-amber-600"></i>
+                        <span>GALERI KARYA ASLI</span>
+                        <span id="portfolio-total-badge" class="bg-amber-400 text-espresso-950 px-2 py-0.5 rounded-full text-[10px] font-black">0 Foto</span>
+                    </div>
+                    <h2 id="portfolio-section-title" class="font-serif text-xl sm:text-3xl font-extrabold text-white leading-tight">
+                        Portofolio Hasil Cetak & Karya Kami
+                    </h2>
+                    <p id="portfolio-section-subtitle" class="text-xs sm:text-sm text-amber-100/85 leading-relaxed">
+                        Dokumentasi asli ratusan pesanan pelanggan dengan kualitas cetak presisi, warna tajam, dan bahan pilihan.
+                    </p>
+                </div>
+
+                <!-- Bar Filter Kategori Portofolio -->
+                <div id="portfolio-category-bar" class="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto no-scrollbar pb-3 mb-5 px-1"></div>
+
+                <!-- Grid Galeri Foto Responsif (2 kolom HP, 3 Tablet, 4 Desktop) -->
+                <div id="portfolio-gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+
+                <!-- Tombol Muat Lebih Banyak (Efisien untuk ratusan foto tanpa lag) -->
+                <div id="portfolio-loadmore-wrap" class="hidden mt-7 flex flex-wrap items-center justify-center gap-2.5">
+                    <button type="button" id="portfolio-loadmore-btn" onclick="loadMorePortfolio()" class="cta-gold-btn bg-amber-400 hover:bg-amber-300 text-espresso-950 text-xs sm:text-sm font-extrabold px-6 py-3 rounded-full shadow-xl hover:-translate-y-0.5 transition inline-flex items-center gap-2">
+                        <i class="fas fa-images"></i>
+                        <span id="portfolio-loadmore-label">Muat Lebih Banyak Foto</span>
+                    </button>
+                    <button type="button" id="portfolio-collapse-btn" onclick="collapsePortfolioView()" class="hidden bg-white/15 hover:bg-white/25 text-white border border-white/25 text-xs font-bold px-5 py-3 rounded-full transition inline-flex items-center gap-1.5">
+                        <i class="fas fa-chevron-up"></i>
+                        <span>Ringkas Tampilan</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- ============================================================= -->
+            <!-- SECTION 8: BLOK / SECTION KUSTOM TAMBAHAN (UI BUILDER)        -->
             <!-- ============================================================= -->
             <section id="sec-custom-blocks" class="space-y-6"></section>
 
         </main>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- LIGHTBOX FULLSCREEN HD PORTOFOLIO (SWIPE & KEYBOARD SUPPORT)          -->
+    <!-- ===================================================================== -->
+    <div id="portfolio-lightbox" class="fixed inset-0 z-[120] bg-black/92 backdrop-blur-md hidden flex-col items-center justify-center p-3 sm:p-6 select-none" onclick="if(event.target===this) closePortfolioLightbox()">
+        <div class="w-full max-w-4xl flex items-center justify-between text-white mb-3 px-1">
+            <div class="flex items-center gap-2">
+                <span id="lb-counter" class="bg-white/15 border border-white/20 text-amber-300 text-xs font-extrabold px-3 py-1 rounded-full">1 / 1</span>
+                <span id="lb-category" class="bg-amber-400 text-espresso-950 text-[10px] sm:text-xs font-extrabold uppercase px-3 py-1 rounded-full">PORTOFOLIO</span>
+            </div>
+            <button type="button" onclick="closePortfolioLightbox()" class="w-10 h-10 rounded-full bg-white/15 hover:bg-red-600 text-white flex items-center justify-center text-lg transition shadow-lg">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="lb-stage" class="relative w-full max-w-4xl flex items-center justify-center my-auto">
+            <button type="button" onclick="navigatePortfolioLightbox(-1)" class="absolute left-1 sm:left-3 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-amber-400 hover:text-espresso-950 text-white border border-white/20 flex items-center justify-center transition shadow-xl">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <div class="w-full flex items-center justify-center px-10 sm:px-16">
+                <img id="lb-img" src="" alt="Portofolio HD" class="max-h-[68vh] max-w-full rounded-2xl object-contain shadow-2xl border-2 border-amber-400/50 bg-stone-950 hd-crisp-img">
+            </div>
+
+            <button type="button" onclick="navigatePortfolioLightbox(1)" class="absolute right-1 sm:right-3 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-amber-400 hover:text-espresso-950 text-white border border-white/20 flex items-center justify-center transition shadow-xl">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div class="w-full max-w-2xl mt-4 bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-3.5 sm:px-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+            <div class="min-w-0">
+                <h4 id="lb-title" class="font-serif font-bold text-white text-sm sm:text-base truncate">Judul Karya</h4>
+                <p class="text-[11px] text-amber-200/80">Geser kiri/kanan atau gunakan tombol panah untuk melihat foto lainnya.</p>
+            </div>
+            <button type="button" onclick="orderPortfolioViaWA()" class="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2 transition">
+                <i class="fab fa-whatsapp text-sm"></i>
+                <span>Pesan Model Seperti Ini</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT ITEM PORTOFOLIO (ADMIN) -->
+    <div id="portfolio-edit-modal" class="fixed inset-0 z-[115] bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border-2 border-amber-400 space-y-4 text-slate-800">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h4 class="font-serif font-bold text-lg text-slate-900">Edit Detail Foto Portofolio</h4>
+                <button type="button" onclick="closeEditPortfolioModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+            <input type="hidden" id="pf-edit-id">
+            <div class="flex items-center gap-3.5 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <img id="pf-edit-preview" src="" class="w-20 h-20 rounded-xl object-cover border border-amber-300 shrink-0 bg-white">
+                <div class="flex-1 space-y-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Judul / Keterangan Foto</label>
+                        <input type="text" id="pf-edit-title" class="w-full border rounded-xl px-3 py-2 text-xs font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Kategori Karya</label>
+                        <input type="text" id="pf-edit-category" list="pf-category-suggestions" class="w-full border rounded-xl px-3 py-2 text-xs">
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2.5 pt-1">
+                <button type="button" onclick="closeEditPortfolioModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50">Batal</button>
+                <button type="button" onclick="saveEditPortfolioItem()" class="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow">Simpan Perubahan</button>
+            </div>
+        </div>
     </div>
 
     <!-- ===================================================================== -->
@@ -1182,6 +1323,9 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             <button onclick="switchAdminTab('tab-digital')" id="mnav-tab-digital" class="admin-mnav-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 flex items-center gap-1.5 transition">
                 <i class="fas fa-cloud-download-alt"></i> <span>Digital</span>
             </button>
+            <button onclick="switchAdminTab('tab-portfolio')" id="mnav-tab-portfolio" class="admin-mnav-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 flex items-center gap-1.5 transition">
+                <i class="fas fa-photo-video"></i> <span>Portofolio</span>
+            </button>
             <button onclick="switchAdminTab('tab-builder')" id="mnav-tab-builder" class="admin-mnav-btn shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 flex items-center gap-1.5 transition">
                 <i class="fas fa-layer-group"></i> <span>UI Builder</span>
             </button>
@@ -1210,6 +1354,10 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     <button onclick="switchAdminTab('tab-digital')" id="nav-tab-digital" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition border border-transparent">
                         <span class="flex items-center gap-3"><i class="fas fa-cloud-download-alt w-4 text-center text-emerald-600"></i> <span>Produk Digital Lynk</span></span>
                         <span id="badge-digital-count" class="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">10</span>
+                    </button>
+                    <button onclick="switchAdminTab('tab-portfolio')" id="nav-tab-portfolio" class="admin-nav-btn w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition border border-transparent">
+                        <span class="flex items-center gap-3"><i class="fas fa-photo-video w-4 text-center text-rose-600"></i> <span>Galeri Portofolio</span></span>
+                        <span id="badge-portfolio-count" class="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">0</span>
                     </button>
 
                     <div class="pt-3 mt-3 border-t border-slate-100">
@@ -1284,8 +1432,8 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                             </div>
                         </div>
 
-                        <!-- 4 Kartu Statistik Utama -->
-                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <!-- 5 Kartu Statistik Utama -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                             <div onclick="switchAdminTab('tab-hero')" class="cursor-pointer bg-gradient-to-br from-amber-50 to-white border border-amber-200 hover:border-amber-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition">
                                 <div class="flex justify-between items-start mb-3">
                                     <span class="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider">PRODUK HERO</span>
@@ -1310,7 +1458,15 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                                 <h4 class="text-2xl sm:text-3xl font-black text-slate-900" id="stat-banner-count">0 <span class="text-xs font-semibold text-slate-500">Slide</span></h4>
                             </div>
 
-                            <div onclick="switchAdminTab('tab-settings')" class="cursor-pointer bg-gradient-to-br from-purple-50 to-white border border-purple-200 hover:border-purple-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+                            <div onclick="switchAdminTab('tab-portfolio')" class="cursor-pointer bg-gradient-to-br from-rose-50 to-white border border-rose-200 hover:border-rose-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition">
+                                <div class="flex justify-between items-start mb-3">
+                                    <span class="text-[10px] font-extrabold text-rose-800 uppercase tracking-wider">PORTOFOLIO</span>
+                                    <div class="w-8 h-8 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-sm"><i class="fas fa-photo-video text-xs"></i></div>
+                                </div>
+                                <h4 class="text-2xl sm:text-3xl font-black text-slate-900" id="stat-portfolio-count">0 <span class="text-xs font-semibold text-slate-500">Foto</span></h4>
+                            </div>
+
+                            <div onclick="switchAdminTab('tab-settings')" class="col-span-2 sm:col-span-1 cursor-pointer bg-gradient-to-br from-purple-50 to-white border border-purple-200 hover:border-purple-400 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-sm hover:shadow-md transition">
                                 <div class="flex justify-between items-start mb-3">
                                     <span class="text-[10px] font-extrabold text-purple-800 uppercase tracking-wider">TEMA & MODE</span>
                                     <div class="w-8 h-8 rounded-xl bg-purple-500 text-white flex items-center justify-center shadow-sm"><i class="fas fa-palette text-xs"></i></div>
@@ -1363,6 +1519,13 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                                     <div>
                                         <p class="text-xs font-extrabold text-slate-800">Kelola Banner 16:7</p>
                                         <p class="text-[10px] text-slate-500">Atur 10 slide promo utama</p>
+                                    </div>
+                                </button>
+                                <button onclick="switchAdminTab('tab-portfolio')" class="bg-white border border-slate-200 hover:border-rose-400 hover:shadow-md rounded-2xl p-3.5 flex items-center gap-3 transition text-left">
+                                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0"><i class="fas fa-photo-video"></i></div>
+                                    <div>
+                                        <p class="text-xs font-extrabold text-slate-800">Upload Ratusan Portofolio</p>
+                                        <p class="text-[10px] text-slate-500">Multi-upload & Tampil/Sembunyi</p>
                                     </div>
                                 </button>
                                 <button onclick="switchAdminTab('tab-settings')" class="bg-white border border-slate-200 hover:border-purple-400 hover:shadow-md rounded-2xl p-3.5 flex items-center gap-3 transition text-left">
@@ -1642,6 +1805,148 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                                 <span class="text-[11px] text-slate-500">Maksimal 10 Slide</span>
                             </div>
                             <div id="admin-digital-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3.2: GALERI PORTOFOLIO RATUSAN FOTO (BATCH UPLOAD + TAMPIL/SEMBUNYI) -->
+                <div id="tab-portfolio" class="admin-tab hidden max-w-6xl mx-auto space-y-5">
+                    <datalist id="pf-category-suggestions">
+                        <option value="Nametag & Atribut">
+                        <option value="Stempel Flash">
+                        <option value="ID Card & Lanyard">
+                        <option value="Plakat & Trophy">
+                        <option value="Banner & Spanduk">
+                        <option value="Merchandise">
+                        <option value="Stiker & Label">
+                        <option value="Undangan & Brosur">
+                        <option value="Karya Lainnya">
+                    </datalist>
+
+                    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <button type="button" onclick="switchAdminTab('tab-dashboard')" title="Kembali ke Dashboard" class="w-10 h-10 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-espresso-950 border border-slate-200 flex items-center justify-center transition shadow-sm shrink-0">
+                                <i class="fas fa-arrow-left text-sm"></i>
+                            </button>
+                            <div>
+                                <h3 class="font-serif text-lg sm:text-xl font-bold text-slate-900">Galeri Portofolio Karya (Upload Ratusan Foto)</h3>
+                                <p class="text-xs text-slate-500">Pilih puluhan hingga ratusan foto sekaligus dari perangkat Anda. Otomatis dikompresi HD WebP ringan.</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Saklar 1-Klik Tampilkan / Sembunyikan Portofolio -->
+                            <button type="button" id="portfolio-visibility-toggle-btn" onclick="togglePortfolioVisibility()" class="px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition flex items-center gap-2 bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                <i id="portfolio-visibility-icon" class="fas fa-eye"></i>
+                                <span id="portfolio-visibility-text">Status: Tampil di Toko</span>
+                            </button>
+                            <button type="button" onclick="switchAdminTab('tab-dashboard')" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-2">
+                                <i class="fas fa-th-large text-amber-400"></i> <span>Kembali ke Dashboard</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        <!-- Kolom Kiri: Multi-Upload Ratusan Foto & Info Seksi -->
+                        <div class="lg:col-span-5 space-y-4 lg:sticky lg:top-2">
+                            <!-- Box Batch Uploader -->
+                            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-4">
+                                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                                    <span class="text-xs font-extrabold uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                                        <i class="fas fa-cloud-upload-alt"></i> <span>Upload Banyak Foto Sekaligus</span>
+                                    </span>
+                                    <span class="text-[10px] font-extrabold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full">HD WebP Hemat Memori</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Kategori untuk Foto yang Diunggah</label>
+                                        <input type="text" id="pf-batch-category" list="pf-category-suggestions" value="Nametag & Atribut" placeholder="Pilih atau ketik kategori..." class="w-full border rounded-xl px-3 py-2 text-xs font-semibold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Awalan Judul (Opsional)</label>
+                                        <input type="text" id="pf-batch-prefix" placeholder="Kosongkan = pakai nama file" class="w-full border rounded-xl px-3 py-2 text-xs">
+                                    </div>
+                                </div>
+
+                                <!-- Drag & Drop Zone Multi-File -->
+                                <div id="portfolio-dropzone" onclick="document.getElementById('portfolio-multi-file').click()" ondragover="event.preventDefault(); this.classList.add('border-amber-500','bg-amber-50');" ondragleave="this.classList.remove('border-amber-500','bg-amber-50');" ondrop="handlePortfolioDrop(event)" class="cursor-pointer border-2 border-dashed border-rose-300 hover:border-amber-500 bg-rose-50/40 hover:bg-amber-50/50 rounded-2xl p-6 text-center transition space-y-2">
+                                    <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-2xl shadow-sm">
+                                        <i class="fas fa-images"></i>
+                                    </div>
+                                    <p class="text-xs sm:text-sm font-extrabold text-slate-800">Klik atau Tarik Ratusan Foto ke Sini</p>
+                                    <p class="text-[11px] text-slate-500">Bisa pilih 10, 50, hingga 200+ foto sekaligus (JPG, PNG, WEBP).</p>
+                                    <span class="inline-block bg-espresso-900 text-amber-300 text-[11px] font-extrabold px-4 py-2 rounded-xl shadow mt-1">
+                                        <i class="fas fa-folder-open mr-1"></i> Pilih Banyak Foto dari Galeri / Disk
+                                    </span>
+                                    <input type="file" id="portfolio-multi-file" multiple accept="image/*" onchange="handlePortfolioBatchFiles(this.files); this.value='';" class="hidden">
+                                </div>
+
+                                <!-- Progress Bar Batch Upload -->
+                                <div id="portfolio-upload-progress-wrap" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
+                                    <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+                                        <span id="portfolio-upload-progress-text"><i class="fas fa-spinner fa-spin text-amber-600 mr-1"></i> Memproses foto...</span>
+                                        <button type="button" onclick="cancelPortfolioBatchUpload()" class="text-[10px] bg-red-100 hover:bg-red-200 text-red-700 font-extrabold px-2.5 py-1 rounded-lg">Hentikan</button>
+                                    </div>
+                                    <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                                        <div id="portfolio-upload-bar" class="h-full bg-gradient-to-r from-amber-400 to-emerald-500 transition-all duration-200" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Tambah 1 Foto via URL (Opsional) -->
+                                <div class="border-t border-slate-100 pt-3 space-y-2">
+                                    <label class="block text-[11px] font-bold text-slate-600">Atau Tambah Cepat via Link URL Gambar</label>
+                                    <div class="flex gap-2">
+                                        <input type="url" id="pf-single-url" placeholder="https://..." class="flex-1 border rounded-xl px-3 py-2 text-xs">
+                                        <button type="button" onclick="addPortfolioByUrl()" class="shrink-0 bg-espresso-900 hover:bg-espresso-800 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl shadow transition">+ Tambah</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pengaturan Judul & Subjudul Seksi Portofolio -->
+                            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200 space-y-3">
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                    <i class="fas fa-heading text-amber-600"></i> <span>Judul & Deskripsi Seksi Portofolio</span>
+                                </span>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Judul Bagian Portofolio</label>
+                                    <input type="text" id="pf-sec-title" placeholder="Portofolio Hasil Cetak & Karya Kami" class="w-full border rounded-xl px-3 py-2 text-xs font-semibold">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Deskripsi Singkat</label>
+                                    <textarea id="pf-sec-subtitle" rows="2" class="w-full border rounded-xl px-3 py-2 text-xs"></textarea>
+                                </div>
+                                <button type="button" onclick="savePortfolioHeaderSettings()" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow transition">
+                                    <i class="fas fa-check-circle mr-1"></i> Simpan Judul & Status Portofolio
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Kolom Kanan: Daftar Foto Portofolio (Dengan Pencarian, Filter & Pagination Admin) -->
+                        <div class="lg:col-span-7 bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200 space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
+                                <div>
+                                    <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Koleksi Foto Portofolio (<span id="admin-pf-total">0</span> Foto)</h4>
+                                    <p class="text-[11px] text-slate-500">Halaman ditata per 24 foto agar tetap super cepat meski berisi ratusan foto.</p>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <button type="button" onclick="bulkDeletePortfolio('category')" class="text-[11px] bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold px-3 py-1.5 rounded-xl transition">Hapus Kategori Aktif</button>
+                                    <button type="button" onclick="bulkDeletePortfolio('all')" class="text-[11px] bg-red-100 hover:bg-red-600 text-red-700 hover:text-white font-bold px-3 py-1.5 rounded-xl transition">Kosongkan Semua</button>
+                                </div>
+                            </div>
+
+                            <!-- Filter & Cari di Admin -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <select id="admin-pf-filter-cat" onchange="adminPortfolioPage=1; renderAdminPortfolioManager();" class="w-full border rounded-xl px-3 py-2 text-xs font-semibold">
+                                    <option value="ALL">Semua Kategori</option>
+                                </select>
+                                <input type="text" id="admin-pf-search" oninput="adminPortfolioPage=1; renderAdminPortfolioManager();" placeholder="Cari judul foto portofolio..." class="w-full border rounded-xl px-3 py-2 text-xs">
+                            </div>
+
+                            <!-- Grid Foto Admin -->
+                            <div id="admin-portfolio-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5"></div>
+
+                            <!-- Navigasi Halaman Admin -->
+                            <div id="admin-pf-pagination" class="flex items-center justify-between pt-2 border-t border-slate-100 text-xs"></div>
                         </div>
                     </div>
                 </div>
@@ -2356,8 +2661,21 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 theme_bg_dark: "#0c0704",
                 font_serif: "Lora",
                 font_sans: "Plus Jakarta Sans",
-                catalog_cta_image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80"
+                catalog_cta_image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=1200&q=80",
+                portfolio_visible: true,
+                portfolio_title: "Portofolio Hasil Cetak & Karya Kami",
+                portfolio_subtitle: "Dokumentasi asli ratusan pesanan pelanggan dengan kualitas cetak presisi, warna tajam, dan bahan pilihan."
             },
+            portfolio: [
+                { ID: "PF_1", Title: "Nametag Akrilik Magnet Eksklusif Perusahaan", Category: "Nametag & Atribut", ImageURL: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80" },
+                { ID: "PF_2", Title: "Stempel Flash Otomatis 2 Warna Presisi", Category: "Stempel Flash", ImageURL: "https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=800&q=80" },
+                { ID: "PF_3", Title: "ID Card PVC + Tali Lanyard Tissue Full Color", Category: "ID Card & Lanyard", ImageURL: "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80" },
+                { ID: "PF_4", Title: "Plakat Akrilik Grafir Laser + Box Beludru", Category: "Plakat & Trophy", ImageURL: "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=800&q=80" },
+                { ID: "PF_5", Title: "Cetak Backdrop & Roll Up Banner Event Kantor", Category: "Banner & Spanduk", ImageURL: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=800&q=80" },
+                { ID: "PF_6", Title: "Souvenir Mug Keramik & Tumbler Grafir Custom", Category: "Merchandise", ImageURL: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=800&q=80" },
+                { ID: "PF_7", Title: "Stiker Label Kemasan Vinyl Anti Air UMKM", Category: "Stiker & Label", ImageURL: "https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=800&q=80" },
+                { ID: "PF_8", Title: "Brosur Promosi & Kartu Nama Art Paper Laminasi", Category: "Undangan & Brosur", ImageURL: "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=800&q=80" }
+            ],
             heroProducts: HERO_SAMPLES.map((item, idx) => ({
                 ID: `HERO_${idx + 1}`,
                 Badge: item.Badge,
@@ -2394,6 +2712,17 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             }))
         };
 
+        const DEFAULT_SECTIONS_CONFIG = [
+            { id: "sec-katalog", name: "Hero & Multi-Marketplace (10 Slide)", icon: "fa-images", visible: true },
+            { id: "sec-banners", name: "Banner Promo 16:7 (10 Slide)", icon: "fa-image", visible: true },
+            { id: "sec-digital", name: "Produk Digital Lynk (10 Slide)", icon: "fa-cloud-download-alt", visible: true },
+            { id: "sec-workshop", name: "Workshop Fisik & Google Maps", icon: "fa-store", visible: true },
+            { id: "sec-cta", name: "Banner Katalog Website Resmi", icon: "fa-globe", visible: true },
+            { id: "sec-sosmed", name: "Saluran Media Sosial Resmi (3D)", icon: "fa-share-alt", visible: true },
+            { id: "sec-portofolio", name: "Galeri Portofolio Hasil Cetak", icon: "fa-photo-video", visible: true },
+            { id: "sec-custom-blocks", name: "Blok / Section Kustom Tambahan", icon: "fa-plus-square", visible: true }
+        ];
+
         let storeData = {};
         let cart = [];
         let heroSwiperInst, bannerSwiperInst, digitalSwiperInst;
@@ -2403,75 +2732,84 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
         let realtimePollTimer = null;
         let activeSessionPinHash = "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
         let activeStoreWorkspaceId = "main_store";
+        let activePortfolioCategory = "ALL";
+        let portfolioVisibleLimit = 12;
+        let portfolioLightboxIndex = 0;
+        let portfolioLightboxFiltered = [];
+        let adminPortfolioPage = 1;
+        let portfolioBatchCancelled = false;
+        let failedLoginAttempts = 0;
+        let lockoutUntilTimestamp = 0;
+        let lockoutInterval = null;
+        let logoTapCount = 0;
+        let logoTapTimer = null;
+        let realtimeBadgeTimer = null;
+
+        let localBroadcast = null;
+        try {
+            if ("BroadcastChannel" in window) {
+                localBroadcast = new BroadcastChannel("anugerah_art_sync_channel");
+                localBroadcast.onmessage = (ev) => {
+                    if (ev.data && ev.data.type === "STORE_UPDATED" && ev.data.payload) {
+                        storeData = ev.data.payload;
+                        renderAll();
+                        renderAdminLists();
+                        populateSettingsForm();
+                        flashRealtimeBadge("Tersinkron antar tab!");
+                    }
+                };
+            }
+        } catch (e) {}
+
         let sbConfig = {
             url: DEFAULT_SUPABASE_URL,
             key: DEFAULT_SUPABASE_ANON_KEY
         };
-
-        // Muat kredensial Supabase yang tersimpan di perangkat jika ada
         try {
-            const savedSb = localStorage.getItem("anugerah_sb_config");
-            if (savedSb) {
-                const parsedSb = JSON.parse(savedSb);
-                if (!sbConfig.url && parsedSb.url) sbConfig.url = parsedSb.url;
-                if (!sbConfig.key && parsedSb.key) sbConfig.key = parsedSb.key;
-            }
-            const cachedStore = localStorage.getItem("anugerah_store_cache");
-            if (cachedStore) {
-                const parsedStore = JSON.parse(cachedStore);
-                if (parsedStore && parsedStore.settings && parsedStore.heroProducts) {
-                    // Migrasi otomatis label default lama ke format terbaru jika belum dikustomisasi
-                    if (!parsedStore.settings.store_tagline || parsedStore.settings.store_tagline === "Pusat Cetak Kustom & Produk Digital") {
-                        parsedStore.settings.store_tagline = "Print Your Solution";
-                    }
-                    if (!parsedStore.settings.whatsapp_ask_label || parsedStore.settings.whatsapp_ask_label === "Tanya Penjual") {
-                        parsedStore.settings.whatsapp_ask_label = "Chat Admin";
-                    }
-                    if (!parsedStore.settings.whatsapp_greeting || parsedStore.settings.whatsapp_greeting.includes("saya ingin bertanya mengenai produk & layanan cetak kustom.")) {
-                        parsedStore.settings.whatsapp_greeting = "Halo Kak Admin PERCETAKAN ANUGERAH_ART 😊🙏, perkenalkan saya ingin berkonsultasi mengenai produk & layanan cetak. Boleh minta dibantu infonya ya Kak? Terima kasih banyak! ✨";
-                    }
-                    storeData = parsedStore;
-                }
+            const savedSb = JSON.parse(localStorage.getItem("anugerah_sb_config") || "null");
+            if (savedSb && savedSb.url && savedSb.key) {
+                sbConfig = { url: savedSb.url, key: savedSb.key };
             }
         } catch (e) {}
 
         // =====================================================================
-        // KEAMANAN WEBAPP: XSS SANITIZER, SHA-256 HASHING, & BRUTE-FORCE LOCK
+        // UTILITAS KEAMANAN (XSS SANITIZER, URL GUARD, SHA-256 & AKSES ADMIN)
         // =====================================================================
-        let logoTapCount = 0;
-        let logoTapTimer = null;
-        let failedLoginAttempts = 0;
-        let lockoutUntilTimestamp = 0;
-        let lockoutInterval = null;
-
         function escapeHtml(str) {
-            if (str === null || str === undefined) return "";
-            return String(str)
+            return String(str == null ? "" : str)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+                .replace(/'/g, "&#39;");
         }
 
         function sanitizeUrl(url) {
-            if (!url) return "#";
-            const trimmed = String(url).trim();
-            if (/^(https?:\/\/|data:image\/|#)/i.test(trimmed)) {
-                return trimmed;
+            const raw = String(url || "").trim();
+            if (!raw) return "#";
+            if (raw.startsWith("#") || raw.startsWith("/") || raw.startsWith("data:image/")) {
+                return raw;
+            }
+            if (/^https?:\/\//i.test(raw) || /^mailto:/i.test(raw) || /^tel:/i.test(raw)) {
+                return raw;
             }
             return "#";
         }
 
         async function sha256Hash(text) {
+            const input = String(text || "");
             if (window.crypto && window.crypto.subtle) {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(text);
-                const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+                const encoded = new TextEncoder().encode(input);
+                const hashBuffer = await window.crypto.subtle.digest("SHA-256", encoded);
+                return Array.from(new Uint8Array(hashBuffer))
+                    .map(b => b.toString(16).padStart(2, "0"))
+                    .join("");
             }
-            return text;
+            // Fallback jika dibuka di konteks non-HTTPS lokal
+            if (input === "123456") {
+                return "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92";
+            }
+            return input;
         }
 
         function handleLogoTap() {
@@ -2487,62 +2825,88 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             }, 1800);
         }
 
-        // Shortcut Keyboard Cadangan: Ctrl + Shift untuk membuka Login Admin
-        window.addEventListener("keydown", function (e) {
-            if (e.ctrlKey && e.shiftKey && (e.key === "Shift" || e.key === "Control")) {
-                e.preventDefault();
-                openAdminLogin();
+        // Shortcut Rahasia Keyboard: Ctrl + Shift untuk membuka Login Admin
+        window.addEventListener("keydown", (e) => {
+            if (e.ctrlKey && e.shiftKey && !e.altKey && (e.key === "Shift" || e.key === "Control")) {
+                const dash = document.getElementById("admin-dashboard");
+                if (dash && dash.classList.contains("hidden")) {
+                    openAdminLogin();
+                }
             }
         });
 
-        // Sinkronisasi instan antar-tab di perangkat yang sama
-        let localBroadcast = null;
-        try {
-            if ("BroadcastChannel" in window) {
-                localBroadcast = new BroadcastChannel("anugerah_art_realtime_channel");
-                localBroadcast.onmessage = (event) => {
-                    if (event.data && event.data.type === "STORE_UPDATED" && event.data.payload) {
-                        storeData = event.data.payload;
-                        renderAll();
-                        renderAdminLists();
-                        flashRealtimeBadge("Tersinkron Otomatis!");
+        function flashRealtimeBadge(text) {
+            const badge = document.getElementById("realtime-indicator");
+            const txtEl = document.getElementById("realtime-status-text");
+            if (!badge || !txtEl) return;
+            txtEl.innerText = text || "Realtime Sync Aktif";
+            badge.classList.remove("opacity-0");
+            badge.classList.add("opacity-100");
+            if (realtimeBadgeTimer) clearTimeout(realtimeBadgeTimer);
+            realtimeBadgeTimer = setTimeout(() => {
+                badge.classList.remove("opacity-100");
+                badge.classList.add("opacity-0");
+            }, 3500);
+        }
+
+        // =====================================================================
+        // INDEXEDDB HELPER (KAPASITAS LOKAL RATUSAN FOTO > 5MB)
+        // =====================================================================
+        function openAnugerahIDB() {
+            return new Promise((resolve, reject) => {
+                if (!("indexedDB" in window)) return reject(new Error("No IndexedDB"));
+                const req = indexedDB.open("AnugerahArtLocalDB", 1);
+                req.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains("kv")) {
+                        db.createObjectStore("kv");
                     }
                 };
-            }
-        } catch (e) {}
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        }
 
-        // Auto-Revalidate ketika tab browser kembali aktif
-        document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === "visible" && supabaseClient) {
-                pullFromSupabase(false);
+        async function saveStoreLocalCache(dataObj) {
+            try {
+                localStorage.setItem("anugerah_store_cache", JSON.stringify(dataObj));
+            } catch (quotaErr) {
+                try {
+                    const lightCopy = { ...dataObj, portfolio: [] };
+                    localStorage.setItem("anugerah_store_cache", JSON.stringify(lightCopy));
+                } catch (e) {}
             }
-        });
+            try {
+                const db = await openAnugerahIDB();
+                const tx = db.transaction("kv", "readwrite");
+                tx.objectStore("kv").put(dataObj, "store_cache");
+            } catch (e) {}
+        }
+
+        async function loadStoreFromIndexedDB() {
+            try {
+                const db = await openAnugerahIDB();
+                return await new Promise((resolve) => {
+                    const tx = db.transaction("kv", "readonly");
+                    const req = tx.objectStore("kv").get("store_cache");
+                    req.onsuccess = () => resolve(req.result || null);
+                    req.onerror = () => resolve(null);
+                });
+            } catch (e) {
+                return null;
+            }
+        }
 
         // =====================================================================
         // 1. INITIALIZATION & SUPABASE REALTIME CONNECTION (ZERO-DELAY)
         // =====================================================================
-        async function initApp() {
-            enforceBloggerFullpageMode();
-            if (!storeData || !storeData.settings) {
-                storeData = JSON.parse(JSON.stringify(DUMMY_STATE));
-            }
-            renderAll();
-
-            if (sbConfig.url && sbConfig.key && window.supabase) {
-                await connectSupabaseRealtime(sbConfig.url, sbConfig.key, false);
-                trackStoreEvent("page_view", window.location.pathname || "/");
-            }
-        }
-
         function applyIncomingStorePayload(newPayload, updatedAt, message) {
             if (!newPayload || !newPayload.settings) return;
             if (updatedAt && updatedAt === lastSyncedTimestamp) return;
             if (updatedAt) lastSyncedTimestamp = updatedAt;
 
             storeData = newPayload;
-            try {
-                localStorage.setItem("anugerah_store_cache", JSON.stringify(storeData));
-            } catch (e) {}
+            saveStoreLocalCache(storeData);
 
             renderAll();
             renderAdminLists();
@@ -2557,10 +2921,8 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     realtime: { params: { eventsPerSecond: 20 } }
                 });
 
-                // 1. Tarik data terbaru begitu halaman dibuka oleh customer
                 await pullFromSupabase(showNotif);
 
-                // 2. Subscribe ke perubahan realtime (`postgres_changes` + `broadcast` instan)
                 if (supabaseChannel) {
                     supabaseClient.removeChannel(supabaseChannel);
                 }
@@ -2608,7 +2970,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                         }
                     });
 
-                // 3. Fallback Heartbeat Ringan (Memastikan di jaringan seluler ketat tetap tanpa delay)
                 if (realtimePollTimer) clearInterval(realtimePollTimer);
                 realtimePollTimer = setInterval(async () => {
                     if (document.visibilityState !== "visible" || !supabaseClient) return;
@@ -2658,7 +3019,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
         }
 
         async function pushToSupabase(showNotif = false, newPinHash = "", snapshotLabel = "Update WebApp Builder") {
-            // Hapus PIN plaintext jika ada agar aman di publik
             if (storeData.settings && storeData.settings.admin_pin) {
                 delete storeData.settings.admin_pin;
             }
@@ -2666,9 +3026,7 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             const nowIso = new Date().toISOString();
             lastSyncedTimestamp = nowIso;
 
-            try {
-                localStorage.setItem("anugerah_store_cache", JSON.stringify(storeData));
-            } catch (e) {}
+            await saveStoreLocalCache(storeData);
 
             if (localBroadcast) {
                 localBroadcast.postMessage({ type: "STORE_UPDATED", payload: storeData });
@@ -2682,7 +3040,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             }
 
             try {
-                // 1. Kirim sinyal Broadcast WebSocket instan (<50ms) ke seluruh perangkat customer yang sedang online
                 if (supabaseChannel) {
                     supabaseChannel.send({
                         type: "broadcast",
@@ -2691,7 +3048,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     });
                 }
 
-                // 2. Simpan permanen ke database PostgreSQL Supabase via RPC `save_store_secure` (mendukung multi-workspace & auto-snapshot)
                 const { error: rpcError } = await supabaseClient.rpc("save_store_secure", {
                     p_pin_hash: activeSessionPinHash,
                     p_new_pin_hash: newPinHash || "",
@@ -2700,9 +3056,7 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     p_snapshot_label: snapshotLabel
                 });
 
-                if (rpcError) {
-                    throw rpcError;
-                }
+                if (rpcError) throw rpcError;
 
                 if (newPinHash) activeSessionPinHash = newPinHash;
                 if (showNotif) showToast(`Tersimpan aman ke "${activeStoreWorkspaceId}" & langsung Realtime di perangkat customer!`);
@@ -2883,35 +3237,36 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             });
         }
 
-        // =====================================================================
-        // KONFIGURASI UI BUILDER, REALTIME BADGE & RENDER UTAMA LANDING PAGE
-        // =====================================================================
-        const DEFAULT_SECTIONS_CONFIG = [
-            { id: "sec-katalog", name: "Hero & Multi-Marketplace (10 Slide)", icon: "fa-images", visible: true },
-            { id: "sec-banners", name: "Banner Promo 16:7 (10 Slide)", icon: "fa-image", visible: true },
-            { id: "sec-digital", name: "Produk Digital Lynk (10 Slide)", icon: "fa-cloud-download-alt", visible: true },
-            { id: "sec-workshop", name: "Workshop Fisik & Google Maps", icon: "fa-store", visible: true },
-            { id: "sec-cta", name: "Banner Katalog Website Resmi", icon: "fa-globe", visible: true },
-            { id: "sec-sosmed", name: "Saluran Media Sosial Resmi (3D)", icon: "fa-share-alt", visible: true },
-            { id: "sec-custom-blocks", name: "Blok / Section Kustom Tambahan", icon: "fa-plus-square", visible: true }
-        ];
+        async function initApp() {
+            enforceBloggerFullpageMode();
+            try {
+                const cached = JSON.parse(localStorage.getItem("anugerah_store_cache") || "null");
+                if (cached && cached.settings && cached.heroProducts) {
+                    storeData = cached;
+                }
+            } catch (e) {}
 
-        let realtimeBadgeTimer = null;
+            const idbStore = await loadStoreFromIndexedDB();
+            if (idbStore && idbStore.settings && idbStore.heroProducts) {
+                if (!storeData || !storeData.settings || (Array.isArray(idbStore.portfolio) && idbStore.portfolio.length > (storeData.portfolio || []).length)) {
+                    storeData = idbStore;
+                }
+            }
 
-        function flashRealtimeBadge(msg) {
-            const indicator = document.getElementById("realtime-indicator");
-            const textEl = document.getElementById("realtime-status-text");
-            if (!indicator || !textEl) return;
-            textEl.innerText = msg || "Realtime Sync Aktif";
-            indicator.classList.remove("opacity-0");
-            indicator.classList.add("opacity-100");
-            if (realtimeBadgeTimer) clearTimeout(realtimeBadgeTimer);
-            realtimeBadgeTimer = setTimeout(() => {
-                indicator.classList.remove("opacity-100");
-                indicator.classList.add("opacity-0");
-            }, 3500);
+            if (!storeData || !storeData.settings) {
+                storeData = JSON.parse(JSON.stringify(DUMMY_STATE));
+            }
+            renderAll();
+
+            if (sbConfig.url && sbConfig.key && window.supabase) {
+                await connectSupabaseRealtime(sbConfig.url, sbConfig.key, false);
+                trackStoreEvent("page_view", window.location.pathname || "/");
+            }
         }
 
+        // =====================================================================
+        // 2. STRUKTUR UI BUILDER & RENDER LANDING PAGE
+        // =====================================================================
         function ensureBuilderStructure() {
             if (!storeData || typeof storeData !== "object") {
                 storeData = JSON.parse(JSON.stringify(DUMMY_STATE));
@@ -2921,6 +3276,12 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             }
             if (!Array.isArray(storeData.customBlocks)) {
                 storeData.customBlocks = [];
+            }
+            if (!Array.isArray(storeData.portfolio)) {
+                storeData.portfolio = JSON.parse(JSON.stringify(DUMMY_STATE.portfolio));
+            }
+            if (storeData.settings.portfolio_visible === undefined) {
+                storeData.settings.portfolio_visible = true;
             }
             if (!Array.isArray(storeData.settings.section_layout) || storeData.settings.section_layout.length === 0) {
                 storeData.settings.section_layout = JSON.parse(JSON.stringify(DEFAULT_SECTIONS_CONFIG));
@@ -2932,20 +3293,22 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     }
                 });
             }
+            const pfSec = storeData.settings.section_layout.find(x => x.id === "sec-portofolio");
+            if (pfSec) {
+                pfSec.visible = storeData.settings.portfolio_visible !== false;
+            }
         }
 
         function applyLayoutFromBuilder() {
             ensureBuilderStructure();
             const s = storeData.settings || {};
 
-            // Lebar kontainer utama
             const landingView = document.getElementById("landing-view");
             if (landingView) {
                 landingView.classList.remove("max-w-4xl", "max-w-5xl", "max-w-6xl", "max-w-7xl");
                 landingView.classList.add(s.ui_container_width || "max-w-5xl");
             }
 
-            // Jarak antar section & urutan/visibilitas section
             const wrapper = document.getElementById("sections-wrapper");
             if (wrapper) {
                 wrapper.classList.remove("space-y-4", "space-y-6", "space-y-8", "space-y-10");
@@ -2967,6 +3330,12 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     }
                 });
             }
+
+            const navPf = document.getElementById("nav-link-portofolio");
+            if (navPf) {
+                const isPfVisible = s.portfolio_visible !== false;
+                navPf.classList.toggle("hidden", !isPfVisible);
+            }
         }
 
         function renderAll() {
@@ -2979,11 +3348,9 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
 
             const s = storeData.settings || {};
 
-            // Terapkan Tema, Mode Siang/Malam, dan Dimensi UI Builder
             applyThemeSettings(s);
             applyLayoutFromBuilder();
 
-            // Update Identitas Brand & Logo Navbar
             const brandName = s.store_name || "PERCETAKAN ANUGERAH_ART";
             const setText = (id, val) => {
                 const el = document.getElementById(id);
@@ -3015,7 +3382,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 }
             }
 
-            // Sinkronkan Tautan Navbar "Katalog Produk" & "Produk Digital"
             const navKatalog = document.getElementById("nav-link-katalog");
             if (navKatalog) {
                 if (s.website_catalog_url && s.website_catalog_url.trim() !== "" && s.website_catalog_url.trim() !== "#") {
@@ -3042,7 +3408,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 }
             }
 
-            // Tautan Lynk & Banner Katalog Website
             const lynkAllBtn = document.getElementById("lynk-all-btn");
             if (lynkAllBtn) lynkAllBtn.href = sanitizeUrl(s.catalog_url || "#");
 
@@ -3053,7 +3418,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             const webCatBtn = document.getElementById("web-catalog-main-btn");
             if (webCatBtn) webCatBtn.href = sanitizeUrl(s.website_catalog_url || "#");
 
-            // Workshop Fisik & Google Maps
             setText("ws-status-title", s.workshop_status || "Buka Sesuai Jam Operasional");
             setText("ws-desc-text", s.workshop_desc || "");
             setText("ws-hours-1", s.workshop_hours_1 || "");
@@ -3073,7 +3437,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 if (el) el.href = mapUrl;
             });
 
-            // 4 Saluran Media Sosial
             const setHref = (id, url) => {
                 const el = document.getElementById(id);
                 if (el) el.href = sanitizeUrl(url || "#");
@@ -3083,12 +3446,81 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             setHref("sosmed-youtube", s.youtube_url);
             setHref("sosmed-facebook", s.facebook_url);
 
-            // Render Seluruh Slider & Blok Kustom
             renderHeroSlides();
             renderBannerSlides();
             renderDigitalSlides();
+            renderPortfolioFrontend();
             renderCustomBlocksFrontend();
             updateAdminDashboardStats();
+        }
+
+        function renderHeroSlides() {
+            const list = (storeData.heroProducts || []).slice(0, 10);
+            const wrapper = document.getElementById("hero-slides-wrapper");
+            if (!wrapper) return;
+
+            wrapper.innerHTML = list.map((item) => {
+                let mpPills = `
+                    <button type="button" onclick="addToCart('${escapeHtml(item.ID)}')" class="mp-pill-web-btn bg-espresso-950 hover:bg-black text-white border border-amber-400/60 text-[11px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow transition">
+                        <i class="fas fa-shopping-bag text-amber-400"></i>
+                        <span>Pesan Website</span>
+                    </button>
+                `;
+                if (item.ShopeeLink) {
+                    mpPills += `<a href="${sanitizeUrl(item.ShopeeLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn text-[11px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow transition"><i class="fas fa-shopping-bag text-orange-500"></i><span>Shopee</span></a>`;
+                }
+                if (item.TokopediaLink) {
+                    mpPills += `<a href="${sanitizeUrl(item.TokopediaLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn text-[11px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow transition"><i class="fas fa-store text-emerald-600"></i><span>Tokopedia</span></a>`;
+                }
+                if (item.TiktokLink) {
+                    mpPills += `<a href="${sanitizeUrl(item.TiktokLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn text-[11px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow transition"><i class="fab fa-tiktok text-black"></i><span>TikTok Shop</span></a>`;
+                }
+                if (item.LazadaLink) {
+                    mpPills += `<a href="${sanitizeUrl(item.LazadaLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn text-[11px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow transition"><i class="fas fa-heart text-indigo-600"></i><span>Lazada</span></a>`;
+                }
+                if (item.BlibliLink) {
+                    mpPills += `<a href="${sanitizeUrl(item.BlibliLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn text-[11px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow transition"><i class="fas fa-shopping-basket text-blue-600"></i><span>Blibli</span></a>`;
+                }
+                if (item.TocoLink) {
+                    mpPills += `<a href="${sanitizeUrl(item.TocoLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn text-[11px] font-bold px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 shadow transition"><i class="fas fa-tag text-amber-500"></i><span>Toco</span></a>`;
+                }
+
+                return `
+                    <div class="swiper-slide px-2 sm:px-6">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                            <div class="md:col-span-7 space-y-3 text-center md:text-left order-2 md:order-1">
+                                <span class="inline-block bg-white text-espresso-950 text-[10px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
+                                    ${escapeHtml(item.Badge || "PRODUK UNGGULAN")}
+                                </span>
+                                <h1 class="font-serif text-2xl sm:text-3xl md:text-[32px] font-bold text-white leading-tight">
+                                    ${escapeHtml(item.Title)}
+                                </h1>
+                                <p class="text-xs sm:text-sm text-amber-100/85 leading-relaxed max-w-lg mx-auto md:mx-0">
+                                    ${escapeHtml(item.Subtitle || "")}
+                                </p>
+                                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-2">
+                                    ${mpPills}
+                                </div>
+                            </div>
+                            <div class="md:col-span-5 flex justify-center md:justify-end order-1 md:order-2">
+                                <div class="w-56 h-56 sm:w-64 sm:h-64 aspect-square rounded-2xl overflow-hidden border-2 border-white/80 shadow-2xl bg-white flex items-center justify-center">
+                                    <img src="${sanitizeUrl(item.ImageURL)}" alt="${escapeHtml(item.Title)}" decoding="async" class="w-full h-full object-cover object-center hd-crisp-img">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            if (heroSwiperInst) heroSwiperInst.destroy(true, true);
+            if (typeof Swiper !== "undefined") {
+                heroSwiperInst = new Swiper(".heroSwiper", {
+                    loop: list.length > 1,
+                    autoplay: { delay: 4500, disableOnInteraction: false },
+                    navigation: { nextEl: ".hero-next", prevEl: ".hero-prev" },
+                    pagination: { el: ".hero-pagination", clickable: true }
+                });
+            }
         }
 
         function renderCustomBlocksFrontend() {
@@ -3177,7 +3609,7 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 if (blocks.length === 0) {
                     cbListEl.innerHTML = `<div class="p-6 text-center bg-white rounded-2xl border border-dashed border-slate-300 text-xs text-slate-400">Belum ada section kustom tambahan. Gunakan form di atas untuk membuat blok baru.</div>`;
                 } else {
-                    cbListEl.innerHTML = blocks.map((cb, idx) => `
+                    cbListEl.innerHTML = blocks.map((cb) => `
                         <div class="flex items-center gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm">
                             <div class="flex-1 min-w-0">
                                 <span class="inline-block text-[9px] font-extrabold uppercase bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md mb-0.5">${escapeHtml(cb.Badge || 'CUSTOM BLOCK')}</span>
@@ -3210,12 +3642,16 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             const layout = storeData.settings.section_layout;
             if (!layout[index]) return;
             layout[index].visible = layout[index].visible === false ? true : false;
+            if (layout[index].id === "sec-portofolio") {
+                storeData.settings.portfolio_visible = layout[index].visible;
+            }
             renderBuilderAdminUI();
             await postAdminAction();
         }
 
         async function resetSectionLayoutOrder() {
             storeData.settings.section_layout = JSON.parse(JSON.stringify(DEFAULT_SECTIONS_CONFIG));
+            storeData.settings.portfolio_visible = true;
             renderBuilderAdminUI();
             await postAdminAction();
         }
@@ -3285,7 +3721,9 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             });
         }
 
-        // Hitung kecerahan warna HEX untuk menjamin kontras teks otomatis (0 = gelap, 255 = terang)
+        // =====================================================================
+        // 3. ENGINE TEMA WARNA, MOTIF & MODE SIANG/MALAM KONTRAS TINGGI
+        // =====================================================================
         function getHexBrightness(hex) {
             if (!hex || typeof hex !== "string") return 20;
             const clean = hex.replace("#", "").trim();
@@ -3321,29 +3759,20 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 document.documentElement.style.setProperty("--custom-pattern-url", "none");
             }
 
-            // Penjaga Kontras Otomatis: Jika warna kartu utama sangat terang, ubah teks kartu menjadi gelap
             const isLightPrimary = getHexBrightness(primaryColor) > 165;
-
             const pattern = s.theme_pattern || "wood-pattern";
             const allPatterns = [
-                "wood-pattern",
-                "batik-pattern",
-                "solid-pattern",
-                "dots-pattern",
-                "woven-pattern",
-                "parang-pattern",
-                "songket-pattern",
-                "megamendung-pattern",
-                "custom-pattern"
+                "wood-pattern", "batik-pattern", "solid-pattern", "dots-pattern",
+                "woven-pattern", "parang-pattern", "songket-pattern",
+                "megamendung-pattern", "custom-pattern"
             ];
-            const patternElements = document.querySelectorAll(".theme-bg-pattern");
-            patternElements.forEach(el => {
+
+            document.querySelectorAll(".theme-bg-pattern").forEach(el => {
                 el.classList.remove(...allPatterns, "light-surface-card");
                 el.classList.add(pattern);
                 if (isLightPrimary) el.classList.add("light-surface-card");
             });
 
-            // Terapkan Mode Siang / Mode Malam secara menyeluruh (Kompatibel Penuh di HP Android, iOS & Desktop)
             const activeMode = String(s.color_mode || "light").toLowerCase().trim();
             const rootEl = document.getElementById("anugerah-fullpage-root");
             const metaThemeColor = document.getElementById("meta-theme-color");
@@ -3362,7 +3791,6 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 document.body.classList.add("dark-mode");
                 if (rootEl) rootEl.classList.add("dark-mode");
                 document.documentElement.setAttribute("data-theme", "dark");
-                document.documentElement.style.setProperty("color-scheme", "dark", "important");
             } else {
                 document.documentElement.classList.remove("dark-mode");
                 document.body.classList.remove("dark-mode");
@@ -3372,18 +3800,12 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 document.body.classList.add("light-mode");
                 if (rootEl) rootEl.classList.add("light-mode");
                 document.documentElement.setAttribute("data-theme", "light");
-                document.documentElement.style.setProperty("color-scheme", "light", "important");
             }
 
             document.documentElement.style.setProperty("background-color", activeBgColor, "important");
             document.body.style.setProperty("background-color", activeBgColor, "important");
-            if (rootEl) {
-                rootEl.style.setProperty("background-color", activeBgColor, "important");
-                rootEl.style.setProperty("color", activeTextColor, "important");
-            }
-            if (metaThemeColor) {
-                metaThemeColor.setAttribute("content", activeBgColor);
-            }
+            if (rootEl) rootEl.style.setProperty("background-color", activeBgColor, "important");
+            if (metaThemeColor) metaThemeColor.setAttribute("content", activeBgColor);
         }
 
         function setAdminColorMode(mode) {
@@ -3460,11 +3882,15 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             const heroCount = (storeData.heroProducts || []).length;
             const digitalCount = (storeData.digitalProducts || []).length;
             const bannerCount = (storeData.banners || []).length;
+            const portfolioCount = (storeData.portfolio || []).length;
 
             if (document.getElementById("stat-hero-count")) {
                 document.getElementById("stat-hero-count").innerHTML = `${heroCount} <span class="text-xs font-semibold text-slate-500">Slide</span>`;
                 document.getElementById("stat-digital-count").innerHTML = `${digitalCount} <span class="text-xs font-semibold text-slate-500">Slide</span>`;
                 document.getElementById("stat-banner-count").innerHTML = `${bannerCount} <span class="text-xs font-semibold text-slate-500">Slide</span>`;
+            }
+            if (document.getElementById("stat-portfolio-count")) {
+                document.getElementById("stat-portfolio-count").innerHTML = `${portfolioCount} <span class="text-xs font-semibold text-slate-500">Foto</span>`;
             }
 
             if (document.getElementById("badge-hero-count")) {
@@ -3472,96 +3898,569 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 document.getElementById("badge-banner-count").innerText = bannerCount;
                 document.getElementById("badge-digital-count").innerText = digitalCount;
             }
+            if (document.getElementById("badge-portfolio-count")) {
+                document.getElementById("badge-portfolio-count").innerText = portfolioCount;
+            }
 
             const cloudBadgeText = document.getElementById("admin-cloud-badge-text");
             if (cloudBadgeText) {
                 cloudBadgeText.innerText = supabaseClient ? "Cloud Realtime Aktif" : "Mode Lokal Perangkat";
             }
 
-            const patternMap = {
-                'wood-pattern': 'Batik Kawung',
-                'parang-pattern': 'Batik Parang',
-                'songket-pattern': 'Tenun Songket',
-                'megamendung-pattern': 'Mega Mendung',
-                'batik-pattern': 'Garis Geometris',
-                'solid-pattern': 'Elegan Solid',
-                'dots-pattern': 'Polkadot Minimalis',
-                'woven-pattern': 'Anyaman Klasik',
-                'custom-pattern': 'Motif Kustom'
-            };
-            const currentPattern = (storeData.settings && storeData.settings.theme_pattern) || 'wood-pattern';
-            const currentMode = (storeData.settings && storeData.settings.color_mode) === 'dark' ? 'Malam' : 'Siang';
-            if (document.getElementById("stat-theme-name")) {
-                document.getElementById("stat-theme-name").innerText = `${patternMap[currentPattern] || 'Batik Kawung'} (${currentMode})`;
+            const themeNameEl = document.getElementById("stat-theme-name");
+            if (themeNameEl) {
+                const patternMap = {
+                    "wood-pattern": "Batik Kawung",
+                    "parang-pattern": "Batik Parang",
+                    "songket-pattern": "Tenun Songket",
+                    "megamendung-pattern": "Mega Mendung",
+                    "batik-pattern": "Geometris",
+                    "dots-pattern": "Polkadot",
+                    "woven-pattern": "Anyaman",
+                    "solid-pattern": "Elegan Solid",
+                    "custom-pattern": "Motif Kustom"
+                };
+                const pat = (storeData.settings && storeData.settings.theme_pattern) || "wood-pattern";
+                const modeLabel = (storeData.settings && storeData.settings.color_mode === "dark") ? "Malam" : "Siang";
+                themeNameEl.innerText = `${patternMap[pat] || "Batik Kawung"} (${modeLabel})`;
             }
         }
 
-        // HERO: 2 Kolom (Teks & Tombol Marketplace di Kiri, Gambar 1:1 di Kanan) Persis Coretan Merah 1
-        function renderHeroSlides() {
-            const list = (storeData.heroProducts || []).slice(0, 10);
-            const wrapper = document.getElementById("hero-slides-wrapper");
+        // =====================================================================
+        // GALERI PORTOFOLIO FRONTEND (RATUSAN FOTO, LAZY LOAD, FILTER & LIGHTBOX)
+        // =====================================================================
+        function getFilteredPortfolioItems() {
+            const items = Array.isArray(storeData.portfolio) ? storeData.portfolio : [];
+            if (activePortfolioCategory === "ALL") return items;
+            return items.filter(it => (it.Category || "Karya Lainnya") === activePortfolioCategory);
+        }
 
-            wrapper.innerHTML = list.map((item) => {
-                const safeId = escapeHtml(item.ID);
-                let mpPills = `
-                    <button onclick="addToCart('${safeId}')" class="mp-pill-web-btn bg-espresso-950 hover:bg-black text-white border border-amber-400/60 text-[11px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow transition">
-                        <i class="fas fa-shopping-bag text-amber-400"></i>
-                        <span>Pesan Website</span>
+        function renderPortfolioFrontend() {
+            ensureBuilderStructure();
+            const s = storeData.settings || {};
+            const allItems = storeData.portfolio || [];
+            const secEl = document.getElementById("sec-portofolio");
+            const navEl = document.getElementById("nav-link-portofolio");
+            const isVisible = s.portfolio_visible !== false;
+
+            if (secEl) secEl.classList.toggle("hidden", !isVisible);
+            if (navEl) navEl.classList.toggle("hidden", !isVisible);
+
+            const titleEl = document.getElementById("portfolio-section-title");
+            const subEl = document.getElementById("portfolio-section-subtitle");
+            const totalBadge = document.getElementById("portfolio-total-badge");
+            if (titleEl) titleEl.innerText = s.portfolio_title || "Portofolio Hasil Cetak & Karya Kami";
+            if (subEl) subEl.innerText = s.portfolio_subtitle || "Dokumentasi asli ratusan pesanan pelanggan dengan kualitas cetak presisi, warna tajam, dan bahan pilihan.";
+            if (totalBadge) totalBadge.innerText = `${allItems.length} Foto`;
+
+            // Bangun kategori unik dari seluruh foto
+            const catCounts = {};
+            allItems.forEach(it => {
+                const cat = (it.Category || "Karya Lainnya").trim() || "Karya Lainnya";
+                catCounts[cat] = (catCounts[cat] || 0) + 1;
+            });
+            const categories = Object.keys(catCounts);
+            if (activePortfolioCategory !== "ALL" && !catCounts[activePortfolioCategory]) {
+                activePortfolioCategory = "ALL";
+            }
+
+            const catBar = document.getElementById("portfolio-category-bar");
+            if (catBar) {
+                let pillsHtml = `
+                    <button type="button" onclick="filterPortfolioCategory('ALL')" class="portfolio-filter-pill shrink-0 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-extrabold ${activePortfolioCategory === 'ALL' ? 'active' : ''}">
+                        Semua (${allItems.length})
                     </button>
                 `;
-                if (item.ShopeeLink) {
-                    mpPills += `<a href="${sanitizeUrl(item.ShopeeLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn bg-white hover:bg-orange-50 text-gray-900 text-[11px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow transition"><i class="fas fa-shopping-bag text-orange-500"></i><span>Shopee</span></a>`;
-                }
-                if (item.TokopediaLink) {
-                    mpPills += `<a href="${sanitizeUrl(item.TokopediaLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn bg-white hover:bg-emerald-50 text-gray-900 text-[11px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow transition"><i class="fas fa-store text-emerald-600"></i><span>Tokopedia</span></a>`;
-                }
-                if (item.TiktokLink) {
-                    mpPills += `<a href="${sanitizeUrl(item.TiktokLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn bg-white hover:bg-gray-100 text-gray-900 text-[11px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow transition"><i class="fab fa-tiktok text-black"></i><span>TikTok Shop</span></a>`;
-                }
-                if (item.LazadaLink) {
-                    mpPills += `<a href="${sanitizeUrl(item.LazadaLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn bg-white hover:bg-indigo-50 text-gray-900 text-[11px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow transition"><i class="fas fa-heart text-indigo-600"></i><span>Lazada</span></a>`;
-                }
-                if (item.BlibliLink) {
-                    mpPills += `<a href="${sanitizeUrl(item.BlibliLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn bg-white hover:bg-blue-50 text-gray-900 text-[11px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow transition"><i class="fas fa-shopping-basket text-blue-600"></i><span>Blibli</span></a>`;
-                }
-                if (item.TocoLink) {
-                    mpPills += `<a href="${sanitizeUrl(item.TocoLink)}" target="_blank" rel="noopener noreferrer" class="mp-pill-btn bg-white hover:bg-amber-50 text-gray-900 text-[11px] font-bold px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow transition"><i class="fas fa-tag text-amber-500"></i><span>Toco</span></a>`;
-                }
+                categories.forEach(cat => {
+                    const safeCat = escapeHtml(cat);
+                    const jsCat = cat.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+                    pillsHtml += `
+                        <button type="button" onclick="filterPortfolioCategory('${jsCat}')" class="portfolio-filter-pill shrink-0 px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-bold ${activePortfolioCategory === cat ? 'active' : ''}">
+                            ${safeCat} (${catCounts[cat]})
+                        </button>
+                    `;
+                });
+                catBar.innerHTML = pillsHtml;
+            }
 
-                return `
-                    <div class="swiper-slide px-2 sm:px-6">
-                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                            <div class="md:col-span-7 space-y-3.5 text-center md:text-left flex flex-col items-center md:items-start order-2 md:order-1">
-                                <span class="inline-block bg-white text-espresso-950 text-[10px] font-extrabold uppercase tracking-wider px-3.5 py-1 rounded-full shadow">
-                                    ${escapeHtml(item.Badge || "PRODUK UNGGULAN")}
+            const filtered = getFilteredPortfolioItems();
+            const grid = document.getElementById("portfolio-gallery-grid");
+            if (!grid) return;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center bg-black/25 rounded-2xl border border-white/10 text-amber-100/80 text-xs sm:text-sm">
+                        <i class="fas fa-images text-3xl text-amber-400/70 mb-2 block"></i>
+                        Belum ada foto portofolio pada kategori ini.
+                    </div>
+                `;
+            } else {
+                const sliceItems = filtered.slice(0, portfolioVisibleLimit);
+                grid.innerHTML = sliceItems.map(item => `
+                    <div onclick="openPortfolioLightbox('${escapeHtml(item.ID)}')" class="portfolio-card group cursor-pointer relative rounded-2xl overflow-hidden shadow-lg aspect-square">
+                        <img src="${sanitizeUrl(item.ImageURL)}" alt="${escapeHtml(item.Title || 'Portofolio')}" loading="lazy" decoding="async" class="w-full h-full object-cover object-center group-hover:scale-108 transition duration-500 hd-crisp-img">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent opacity-85 group-hover:opacity-100 transition flex flex-col justify-between p-2.5 sm:p-3">
+                            <div class="flex items-start justify-between gap-1">
+                                <span class="bg-black/65 backdrop-blur-sm text-amber-300 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-amber-400/35 truncate max-w-[78%]">
+                                    ${escapeHtml(item.Category || "Karya")}
                                 </span>
-                                <h2 class="font-serif text-2xl sm:text-3xl md:text-[32px] font-bold text-white leading-tight">
-                                    ${escapeHtml(item.Title)}
-                                </h2>
-                                <p class="text-xs sm:text-sm text-amber-100/85 leading-relaxed max-w-lg">
-                                    ${escapeHtml(item.Subtitle || "")}
-                                </p>
-                                <div class="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-2 max-w-md">
-                                    ${mpPills}
-                                </div>
+                                <span class="w-7 h-7 rounded-full bg-white/20 group-hover:bg-amber-400 group-hover:text-espresso-950 text-white backdrop-blur-sm flex items-center justify-center text-[10px] transition shrink-0">
+                                    <i class="fas fa-expand-alt"></i>
+                                </span>
                             </div>
-                            <div class="md:col-span-5 flex justify-center md:justify-end order-1 md:order-2">
-                                <div class="w-52 h-52 sm:w-64 sm:h-64 aspect-square rounded-2xl overflow-hidden border-2 border-white/85 shadow-2xl bg-white flex items-center justify-center">
-                                    <img src="${sanitizeUrl(item.ImageURL)}" alt="${escapeHtml(item.Title)}" decoding="async" class="w-full h-full object-cover object-center hd-crisp-img">
+                            <p class="text-[11px] sm:text-xs font-bold text-white leading-snug line-clamp-2 drop-shadow">
+                                ${escapeHtml(item.Title || "Hasil Cetak ANUGERAH_ART")}
+                            </p>
+                        </div>
+                    </div>
+                `).join("");
+            }
+
+            // Atur tombol Muat Lebih Banyak untuk ratusan foto
+            const lmWrap = document.getElementById("portfolio-loadmore-wrap");
+            const lmBtn = document.getElementById("portfolio-loadmore-btn");
+            const lmLabel = document.getElementById("portfolio-loadmore-label");
+            const colBtn = document.getElementById("portfolio-collapse-btn");
+
+            if (lmWrap && lmBtn && lmLabel && colBtn) {
+                const remaining = filtered.length - portfolioVisibleLimit;
+                if (remaining > 0 || portfolioVisibleLimit > 12) {
+                    lmWrap.classList.remove("hidden");
+                    if (remaining > 0) {
+                        lmBtn.classList.remove("hidden");
+                        lmLabel.innerText = `Muat Lebih Banyak (+${Math.min(24, remaining)} dari ${remaining} Sisa Foto)`;
+                    } else {
+                        lmBtn.classList.add("hidden");
+                    }
+                    colBtn.classList.toggle("hidden", portfolioVisibleLimit <= 12);
+                } else {
+                    lmWrap.classList.add("hidden");
+                }
+            }
+        }
+
+        function filterPortfolioCategory(cat) {
+            activePortfolioCategory = cat;
+            portfolioVisibleLimit = 12;
+            renderPortfolioFrontend();
+        }
+
+        function loadMorePortfolio() {
+            portfolioVisibleLimit += 24;
+            renderPortfolioFrontend();
+        }
+
+        function collapsePortfolioView() {
+            portfolioVisibleLimit = 12;
+            renderPortfolioFrontend();
+            const sec = document.getElementById("sec-portofolio");
+            if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        function openPortfolioLightbox(itemId) {
+            portfolioLightboxFiltered = getFilteredPortfolioItems();
+            const idx = portfolioLightboxFiltered.findIndex(x => x.ID === itemId);
+            if (idx < 0) return;
+            portfolioLightboxIndex = idx;
+            updatePortfolioLightboxUI();
+            const lb = document.getElementById("portfolio-lightbox");
+            if (lb) {
+                lb.classList.remove("hidden");
+                lb.classList.add("flex");
+            }
+        }
+
+        function updatePortfolioLightboxUI() {
+            const item = portfolioLightboxFiltered[portfolioLightboxIndex];
+            if (!item) return;
+            document.getElementById("lb-img").src = sanitizeUrl(item.ImageURL);
+            document.getElementById("lb-title").innerText = item.Title || "Hasil Cetak ANUGERAH_ART";
+            document.getElementById("lb-category").innerText = item.Category || "PORTOFOLIO";
+            document.getElementById("lb-counter").innerText = `${portfolioLightboxIndex + 1} / ${portfolioLightboxFiltered.length}`;
+        }
+
+        function navigatePortfolioLightbox(step) {
+            if (!portfolioLightboxFiltered.length) return;
+            portfolioLightboxIndex = (portfolioLightboxIndex + step + portfolioLightboxFiltered.length) % portfolioLightboxFiltered.length;
+            updatePortfolioLightboxUI();
+        }
+
+        function closePortfolioLightbox() {
+            const lb = document.getElementById("portfolio-lightbox");
+            if (lb) {
+                lb.classList.add("hidden");
+                lb.classList.remove("flex");
+            }
+        }
+
+        function orderPortfolioViaWA() {
+            const item = portfolioLightboxFiltered[portfolioLightboxIndex];
+            const s = storeData.settings || {};
+            const wa = normalizePhoneWA(s.whatsapp_number);
+            const storeName = s.store_name || "PERCETAKAN ANUGERAH_ART";
+            const refTitle = item ? `${item.Title} (${item.Category})` : "Portofolio Karya";
+            trackStoreEvent("wa_chat", "portfolio_lightbox");
+            const msg = `Halo Kak Admin ${storeName} 😊🙏, saya melihat karya *"${refTitle}"* di Galeri Portofolio website. Boleh minta info harga & cara pesan model seperti itu ya Kak? Terima kasih! ✨`;
+            window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+        }
+
+        // Dukungan Keyboard & Touch Swipe pada Lightbox Portofolio
+        (function initLightboxGestures() {
+            let touchStartX = 0;
+            window.addEventListener("keydown", (e) => {
+                const lb = document.getElementById("portfolio-lightbox");
+                if (!lb || lb.classList.contains("hidden")) return;
+                if (e.key === "Escape") closePortfolioLightbox();
+                if (e.key === "ArrowLeft") navigatePortfolioLightbox(-1);
+                if (e.key === "ArrowRight") navigatePortfolioLightbox(1);
+            });
+            document.addEventListener("touchstart", (e) => {
+                const lb = document.getElementById("portfolio-lightbox");
+                if (!lb || lb.classList.contains("hidden")) return;
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+            document.addEventListener("touchend", (e) => {
+                const lb = document.getElementById("portfolio-lightbox");
+                if (!lb || lb.classList.contains("hidden")) return;
+                const diff = e.changedTouches[0].screenX - touchStartX;
+                if (Math.abs(diff) > 45) {
+                    navigatePortfolioLightbox(diff > 0 ? -1 : 1);
+                }
+            }, { passive: true });
+        })();
+
+        // =====================================================================
+        // MANAJEMEN PORTOFOLIO ADMIN (BATCH UPLOAD RATUSAN FOTO & HIDE/SHOW)
+        // =====================================================================
+        async function togglePortfolioVisibility() {
+            ensureBuilderStructure();
+            const nextState = storeData.settings.portfolio_visible === false ? true : false;
+            storeData.settings.portfolio_visible = nextState;
+            const pfSec = (storeData.settings.section_layout || []).find(x => x.id === "sec-portofolio");
+            if (pfSec) pfSec.visible = nextState;
+            renderAdminPortfolioManager();
+            await postAdminAction();
+            showToast(nextState ? "Portofolio ditampilkan di Navbar & Halaman Toko!" : "Portofolio disembunyikan dari tampilan pelanggan.", "info");
+        }
+
+        async function savePortfolioHeaderSettings() {
+            ensureBuilderStructure();
+            const tEl = document.getElementById("pf-sec-title");
+            const sEl = document.getElementById("pf-sec-subtitle");
+            if (tEl) storeData.settings.portfolio_title = tEl.value.trim() || "Portofolio Hasil Cetak & Karya Kami";
+            if (sEl) storeData.settings.portfolio_subtitle = sEl.value.trim();
+            await postAdminAction();
+            showToast("Judul & deskripsi Portofolio berhasil disimpan!");
+        }
+
+        function handlePortfolioDrop(e) {
+            e.preventDefault();
+            const dz = document.getElementById("portfolio-dropzone");
+            if (dz) dz.classList.remove("border-amber-500", "bg-amber-50");
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handlePortfolioBatchFiles(e.dataTransfer.files);
+            }
+        }
+
+        function cancelPortfolioBatchUpload() {
+            portfolioBatchCancelled = true;
+            showToast("Menghentikan proses unggah batch...", "info");
+        }
+
+        function compressPortfolioFileToHD(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onerror = () => reject(new Error("Gagal membaca file"));
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onerror = () => reject(new Error("Format gambar tidak didukung"));
+                    img.onload = async () => {
+                        const maxDim = 1080;
+                        let w = img.naturalWidth || img.width;
+                        let h = img.naturalHeight || img.height;
+                        if (w > maxDim || h > maxDim) {
+                            if (w >= h) {
+                                h = Math.max(1, Math.round((h * maxDim) / w));
+                                w = maxDim;
+                            } else {
+                                w = Math.max(1, Math.round((w * maxDim) / h));
+                                h = maxDim;
+                            }
+                        }
+                        const canvas = renderHighQualityCanvas(img, w, h);
+                        let quality = 0.86;
+                        let mime = "image/webp";
+                        let dataUrl = canvas.toDataURL(mime, quality);
+                        if (!dataUrl.startsWith("data:image/webp")) {
+                            mime = "image/jpeg";
+                            dataUrl = canvas.toDataURL(mime, quality);
+                        }
+                        let blob = dataURLToBlob(dataUrl);
+                        const budget = 95 * 1024; // ~95 KB HD WebP per foto agar ratusan foto tetap super ringan
+                        while (blob.size > budget && quality > 0.68) {
+                            quality = +(quality - 0.04).toFixed(2);
+                            dataUrl = canvas.toDataURL(mime, quality);
+                            blob = dataURLToBlob(dataUrl);
+                        }
+
+                        let finalUrl = dataUrl;
+                        if (supabaseClient) {
+                            try {
+                                const ext = mime === "image/webp" ? "webp" : "jpg";
+                                const filePath = `pf_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+                                const { error: upErr } = await supabaseClient.storage
+                                    .from("anugerah_media")
+                                    .upload(filePath, blob, { contentType: mime, cacheControl: "31536000", upsert: false });
+                                if (!upErr) {
+                                    const { data: pubData } = supabaseClient.storage.from("anugerah_media").getPublicUrl(filePath);
+                                    if (pubData && pubData.publicUrl) finalUrl = pubData.publicUrl;
+                                }
+                            } catch (err) {}
+                        }
+                        resolve(finalUrl);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handlePortfolioBatchFiles(fileList) {
+            ensureBuilderStructure();
+            const files = Array.from(fileList || []).filter(f => f.type && f.type.startsWith("image/"));
+            if (files.length === 0) {
+                showToast("Pilih minimal 1 file gambar (JPG/PNG/WEBP).", "error");
+                return;
+            }
+
+            portfolioBatchCancelled = false;
+            const category = (document.getElementById("pf-batch-category")?.value || "Karya Lainnya").trim() || "Karya Lainnya";
+            const prefix = (document.getElementById("pf-batch-prefix")?.value || "").trim();
+            const progWrap = document.getElementById("portfolio-upload-progress-wrap");
+            const progBar = document.getElementById("portfolio-upload-bar");
+            const progText = document.getElementById("portfolio-upload-progress-text");
+
+            if (progWrap) progWrap.classList.remove("hidden");
+            let completed = 0;
+            let addedCount = 0;
+            const total = files.length;
+            const batchConcurrency = 3; // Proses 3 foto paralel agar browser HP/Desktop tidak hang walau ratusan foto
+
+            for (let i = 0; i < total; i += batchConcurrency) {
+                if (portfolioBatchCancelled) break;
+                const chunk = files.slice(i, i + batchConcurrency);
+                const results = await Promise.all(chunk.map(async (file, offset) => {
+                    try {
+                        const imageUrl = await compressPortfolioFileToHD(file);
+                        const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]+/g, " ").trim();
+                        const title = prefix ? `${prefix} #${i + offset + 1}` : (cleanName || `${category} #${Date.now()}`);
+                        return {
+                            ID: `PF_${Date.now()}_${i + offset}_${Math.random().toString(36).substring(2, 6)}`,
+                            Title: title,
+                            Category: category,
+                            ImageURL: imageUrl
+                        };
+                    } catch (err) {
+                        return null;
+                    }
+                }));
+
+                results.filter(Boolean).reverse().forEach(item => {
+                    storeData.portfolio.unshift(item);
+                    addedCount++;
+                });
+
+                completed = Math.min(total, i + chunk.length);
+                const pct = Math.round((completed / total) * 100);
+                if (progBar) progBar.style.width = `${pct}%`;
+                if (progText) progText.innerHTML = `<i class="fas fa-spinner fa-spin text-amber-600 mr-1"></i> Memproses ${completed} / ${total} foto (${pct}%)...`;
+            }
+
+            if (progWrap) {
+                setTimeout(() => {
+                    progWrap.classList.add("hidden");
+                    if (progBar) progBar.style.width = "0%";
+                }, 900);
+            }
+
+            if (addedCount > 0) {
+                adminPortfolioPage = 1;
+                await postAdminAction();
+                showToast(`Berhasil mengunggah ${addedCount} foto HD ke Galeri Portofolio!`);
+            }
+        }
+
+        async function addPortfolioByUrl() {
+            ensureBuilderStructure();
+            const urlInput = document.getElementById("pf-single-url");
+            const url = (urlInput && urlInput.value.trim()) || "";
+            if (!url || sanitizeUrl(url) === "#") {
+                showToast("Masukkan URL gambar yang valid (https://...)", "error");
+                return;
+            }
+            const category = (document.getElementById("pf-batch-category")?.value || "Karya Lainnya").trim() || "Karya Lainnya";
+            const prefix = (document.getElementById("pf-batch-prefix")?.value || "").trim();
+            storeData.portfolio.unshift({
+                ID: `PF_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                Title: prefix || `Karya ${category}`,
+                Category: category,
+                ImageURL: url
+            });
+            urlInput.value = "";
+            adminPortfolioPage = 1;
+            await postAdminAction();
+            showToast("Foto portofolio berhasil ditambahkan!");
+        }
+
+        function renderAdminPortfolioManager() {
+            ensureBuilderStructure();
+            const s = storeData.settings || {};
+            const allItems = storeData.portfolio || [];
+            const isVisible = s.portfolio_visible !== false;
+
+            // Update tombol saklar Tampil/Sembunyi
+            const toggleBtn = document.getElementById("portfolio-visibility-toggle-btn");
+            const toggleIcon = document.getElementById("portfolio-visibility-icon");
+            const toggleText = document.getElementById("portfolio-visibility-text");
+            if (toggleBtn && toggleIcon && toggleText) {
+                if (isVisible) {
+                    toggleBtn.className = "px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition flex items-center gap-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300";
+                    toggleIcon.className = "fas fa-eye";
+                    toggleText.innerText = "Status: Tampil di Toko";
+                } else {
+                    toggleBtn.className = "px-4 py-2.5 rounded-xl text-xs font-extrabold shadow-sm transition flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 border border-red-300";
+                    toggleIcon.className = "fas fa-eye-slash";
+                    toggleText.innerText = "Status: Disembunyikan";
+                }
+            }
+
+            // Isi form judul & subjudul jika sedang kosong/terbuka
+            const tEl = document.getElementById("pf-sec-title");
+            const sEl = document.getElementById("pf-sec-subtitle");
+            if (tEl && document.activeElement !== tEl) tEl.value = s.portfolio_title || "Portofolio Hasil Cetak & Karya Kami";
+            if (sEl && document.activeElement !== sEl) sEl.value = s.portfolio_subtitle || "";
+
+            const totalEl = document.getElementById("admin-pf-total");
+            if (totalEl) totalEl.innerText = allItems.length;
+
+            // Update dropdown filter kategori
+            const catSelect = document.getElementById("admin-pf-filter-cat");
+            const prevCat = catSelect ? catSelect.value : "ALL";
+            const uniqueCats = [...new Set(allItems.map(x => (x.Category || "Karya Lainnya").trim()))];
+            if (catSelect) {
+                catSelect.innerHTML = `<option value="ALL">Semua Kategori (${allItems.length})</option>` +
+                    uniqueCats.map(c => `<option value="${escapeHtml(c)}" ${prevCat === c ? "selected" : ""}>${escapeHtml(c)}</option>`).join("");
+            }
+
+            const selectedCat = catSelect ? catSelect.value : "ALL";
+            const searchQ = (document.getElementById("admin-pf-search")?.value || "").trim().toLowerCase();
+
+            const filtered = allItems.filter(it => {
+                const matchCat = selectedCat === "ALL" || (it.Category || "Karya Lainnya") === selectedCat;
+                const matchQ = !searchQ || ((it.Title || "") + " " + (it.Category || "")).toLowerCase().includes(searchQ);
+                return matchCat && matchQ;
+            });
+
+            const perPage = 24;
+            const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+            if (adminPortfolioPage > totalPages) adminPortfolioPage = totalPages;
+            const startIdx = (adminPortfolioPage - 1) * perPage;
+            const pageItems = filtered.slice(startIdx, startIdx + perPage);
+
+            const grid = document.getElementById("admin-portfolio-grid");
+            if (grid) {
+                if (pageItems.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-10 text-center text-xs text-slate-400 border border-dashed border-slate-300 rounded-2xl">Tidak ada foto portofolio ditemukan.</div>`;
+                } else {
+                    grid.innerHTML = pageItems.map((it, idx) => `
+                        <div class="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden flex flex-col shadow-sm group">
+                            <div class="relative aspect-square bg-slate-200 overflow-hidden">
+                                <img src="${sanitizeUrl(it.ImageURL)}" loading="lazy" class="w-full h-full object-cover">
+                                <span class="absolute top-1.5 left-1.5 bg-black/70 text-amber-300 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md">#${startIdx + idx + 1}</span>
+                            </div>
+                            <div class="p-2 space-y-1.5 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <span class="block text-[9px] font-extrabold text-rose-700 truncate">${escapeHtml(it.Category || "Karya")}</span>
+                                    <p class="text-[11px] font-bold text-slate-800 truncate" title="${escapeHtml(it.Title)}">${escapeHtml(it.Title || "Tanpa Judul")}</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-1 pt-1">
+                                    <button type="button" onclick="openEditPortfolioModal('${escapeHtml(it.ID)}')" class="text-[10px] bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white py-1 rounded-lg font-bold transition"><i class="fas fa-edit"></i> Edit</button>
+                                    <button type="button" onclick="deletePortfolioItem('${escapeHtml(it.ID)}')" class="text-[10px] bg-red-50 hover:bg-red-600 text-red-600 hover:text-white py-1 rounded-lg font-bold transition"><i class="fas fa-trash"></i> Hapus</button>
                                 </div>
                             </div>
                         </div>
+                    `).join("");
+                }
+            }
+
+            const pagEl = document.getElementById("admin-pf-pagination");
+            if (pagEl) {
+                pagEl.innerHTML = `
+                    <span class="text-slate-500 font-semibold">Menampilkan ${pageItems.length} dari ${filtered.length} foto (Hal ${adminPortfolioPage}/${totalPages})</span>
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="if(adminPortfolioPage>1){adminPortfolioPage--; renderAdminPortfolioManager();}" ${adminPortfolioPage <= 1 ? "disabled" : ""} class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 font-bold disabled:opacity-40 transition">← Sebelumnya</button>
+                        <button type="button" onclick="if(adminPortfolioPage<${totalPages}){adminPortfolioPage++; renderAdminPortfolioManager();}" ${adminPortfolioPage >= totalPages ? "disabled" : ""} class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 font-bold disabled:opacity-40 transition">Berikutnya →</button>
                     </div>
                 `;
-            }).join("");
+            }
+        }
 
-            if (heroSwiperInst) heroSwiperInst.destroy(true, true);
-            if (typeof Swiper !== "undefined") {
-                heroSwiperInst = new Swiper(".heroSwiper", {
-                    loop: list.length > 1,
-                    autoplay: { delay: 4500, disableOnInteraction: false },
-                    navigation: { nextEl: ".hero-next", prevEl: ".hero-prev" },
-                    pagination: { el: ".hero-pagination", clickable: true }
+        function openEditPortfolioModal(id) {
+            const item = (storeData.portfolio || []).find(x => x.ID === id);
+            if (!item) return;
+            document.getElementById("pf-edit-id").value = item.ID;
+            document.getElementById("pf-edit-preview").src = sanitizeUrl(item.ImageURL);
+            document.getElementById("pf-edit-title").value = item.Title || "";
+            document.getElementById("pf-edit-category").value = item.Category || "";
+            const m = document.getElementById("portfolio-edit-modal");
+            if (m) {
+                m.classList.remove("hidden");
+                m.classList.add("flex");
+            }
+        }
+
+        function closeEditPortfolioModal() {
+            const m = document.getElementById("portfolio-edit-modal");
+            if (m) {
+                m.classList.add("hidden");
+                m.classList.remove("flex");
+            }
+        }
+
+        async function saveEditPortfolioItem() {
+            const id = document.getElementById("pf-edit-id").value;
+            const item = (storeData.portfolio || []).find(x => x.ID === id);
+            if (!item) return;
+            item.Title = document.getElementById("pf-edit-title").value.trim() || "Hasil Cetak ANUGERAH_ART";
+            item.Category = document.getElementById("pf-edit-category").value.trim() || "Karya Lainnya";
+            closeEditPortfolioModal();
+            await postAdminAction();
+            showToast("Detail foto portofolio diperbarui!");
+        }
+
+        function deletePortfolioItem(id) {
+            openConfirmModal("Hapus foto ini dari Galeri Portofolio?", async () => {
+                storeData.portfolio = (storeData.portfolio || []).filter(x => x.ID !== id);
+                await postAdminAction();
+                showToast("Foto portofolio dihapus.");
+            });
+        }
+
+        function bulkDeletePortfolio(mode) {
+            const cat = document.getElementById("admin-pf-filter-cat")?.value || "ALL";
+            if (mode === "all" || cat === "ALL") {
+                openConfirmModal(`Hapus SEMUA ${(storeData.portfolio || []).length} foto portofolio? Tindakan ini tidak bisa dibatalkan.`, async () => {
+                    storeData.portfolio = [];
+                    adminPortfolioPage = 1;
+                    await postAdminAction();
+                    showToast("Seluruh foto portofolio berhasil dikosongkan.");
+                });
+            } else {
+                openConfirmModal(`Hapus seluruh foto dalam kategori "${cat}"?`, async () => {
+                    storeData.portfolio = (storeData.portfolio || []).filter(x => (x.Category || "Karya Lainnya") !== cat);
+                    adminPortfolioPage = 1;
+                    await postAdminAction();
+                    showToast(`Seluruh foto kategori "${cat}" berhasil dihapus.`);
                 });
             }
         }
@@ -4165,6 +5064,8 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 renderBuilderAdminUI();
                 loadSupabaseWorkspaces();
                 loadSupabaseSnapshots();
+            } else if (tabId === "tab-portfolio") {
+                renderAdminPortfolioManager();
             } else if (tabId === "tab-dashboard") {
                 updateAdminDashboardStats();
                 loadSupabaseAnalytics();
@@ -4423,14 +5324,14 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
         }
 
         async function saveAllSettings() {
-            const newPin = document.getElementById("set-admin_pin").value.trim();
+            const rawNewPin = (document.getElementById("set-admin_pin")?.value || "").trim();
             let newPinHash = "";
-            if (newPin) {
-                if (newPin.length !== 6) {
-                    showToast("PIN Admin baru harus terdiri dari 6 digit!", "error");
+            if (rawNewPin !== "") {
+                if (!/^\d{6}$/.test(rawNewPin)) {
+                    showToast("PIN Admin baru wajib tepat 6 digit angka!", "error");
                     return;
                 }
-                newPinHash = await sha256Hash(newPin);
+                newPinHash = await sha256Hash(rawNewPin);
             }
 
             const keys = [
@@ -4455,7 +5356,8 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
             }
 
             storeData.settings = { ...(storeData.settings || {}), ...settingsObj };
-            document.getElementById("set-admin_pin").value = "";
+            const pinInput = document.getElementById("set-admin_pin");
+            if (pinInput) pinInput.value = "";
             applyThemeSettings(storeData.settings);
             updateAdminDashboardStats();
 
@@ -4524,7 +5426,7 @@ drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                     </div>
                 `).join("");
             }
-
+            renderAdminPortfolioManager();
             renderBuilderAdminUI();
         }
 
