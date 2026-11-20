@@ -549,27 +549,43 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">1. Supabase Project URL</label>
-                        <input type="url" id="sb-url-input" placeholder="https://xxxxxx.supabase.co" class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <input type="url" id="sb-url-input" placeholder="https://xxxxxx.supabase.co" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs bg-white text-slate-900">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">2. Supabase Anon Public Key</label>
-                        <input type="text" id="sb-key-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <input type="password" id="sb-key-input" placeholder="eyJhbGciOiJIUzI1NiIs..." class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs bg-white text-slate-900">
                     </div>
                 </div>
 
-                <div class="bg-stone-900 text-amber-200 rounded-2xl p-4 text-xs space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-amber-400"><i class="fas fa-database mr-1.5"></i>3. Jalankan SQL Backend & Realtime Ini di Supabase SQL Editor:</span>
-                        <button onclick="copySupabaseSQL()" class="bg-amber-400 hover:bg-amber-300 text-espresso-950 font-extrabold px-3 py-1 rounded-lg text-[11px] transition">
-                            <i class="far fa-copy mr-1"></i>Salin SQL Backend
+                <div class="bg-slate-900 rounded-2xl p-3.5 border border-slate-700 space-y-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-extrabold text-amber-300 flex items-center gap-1.5">
+                            <i class="fas fa-database"></i> 3. SQL Backend Supabase Pro v2.2 (Jalankan di SQL Editor)
+                        </span>
+                        <button type="button" onclick="copySupabaseSQL()" class="bg-amber-400 hover:bg-amber-300 text-espresso-950 text-[10px] font-extrabold px-3 py-1 rounded-lg shadow transition">
+                            <i class="far fa-copy mr-1"></i> Salin SQL Backend
                         </button>
                     </div>
-                    <pre id="supabase-sql-code" class="overflow-x-auto text-[10px] leading-relaxed text-emerald-300 bg-black/50 p-3 rounded-xl max-h-40">-- BACKEND SUPABASE PRO: WEBAPP BUILDER + STRICT RLS + REALTIME + CDN
+                    <pre id="supabase-sql-code" class="overflow-x-auto text-[10px] leading-relaxed text-emerald-300 bg-black/50 p-3 rounded-xl max-h-40">-- BACKEND SUPABASE PRO v2.2: AUTO-MIGRASI + STRICT RLS + REALTIME + HEALTH + CDN
+grant usage on schema public to anon, authenticated;
+
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_schema = 'public' and table_name = 'anugerah_admin_auth')
+     and (
+       not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'anugerah_admin_auth' and column_name = 'pin_hash')
+       or not exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'anugerah_admin_auth' and column_name = 'id' and data_type = 'text')
+     ) then
+    drop table public.anugerah_admin_auth cascade;
+  end if;
+end $$;
+
 create table if not exists public.anugerah_admin_auth (
   id text primary key default 'default',
   pin_hash text not null,
   updated_at timestamptz default now()
 );
+alter table public.anugerah_admin_auth add column if not exists updated_at timestamptz default now();
 insert into public.anugerah_admin_auth (id, pin_hash)
 values ('default', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92')
 on conflict (id) do nothing;
@@ -580,6 +596,7 @@ create table if not exists public.anugerah_store (
   pin_hash text default null,
   updated_at timestamptz default now()
 );
+alter table public.anugerah_store add column if not exists payload jsonb default '{}'::jsonb, add column if not exists pin_hash text default null, add column if not exists updated_at timestamptz default now();
 alter table public.anugerah_store replica identity full;
 
 create table if not exists public.anugerah_store_history (
@@ -589,6 +606,7 @@ create table if not exists public.anugerah_store_history (
   payload jsonb not null,
   created_at timestamptz default now()
 );
+alter table public.anugerah_store_history add column if not exists store_id text not null default 'main_store', add column if not exists label text default 'Auto Snapshot', add column if not exists payload jsonb not null default '{}'::jsonb, add column if not exists created_at timestamptz default now();
 
 create table if not exists public.anugerah_analytics (
   id bigint generated always as identity primary key,
@@ -597,11 +615,18 @@ create table if not exists public.anugerah_analytics (
   label text default '',
   created_at timestamptz default now()
 );
+alter table public.anugerah_analytics add column if not exists store_id text not null default 'main_store', add column if not exists event_type text not null default 'page_view', add column if not exists label text default '', add column if not exists created_at timestamptz default now();
 
 alter table public.anugerah_admin_auth enable row level security;
 alter table public.anugerah_store enable row level security;
 alter table public.anugerah_store_history enable row level security;
 alter table public.anugerah_analytics enable row level security;
+
+revoke all on public.anugerah_admin_auth from anon, authenticated;
+revoke all on public.anugerah_store_history from anon, authenticated;
+revoke all on public.anugerah_analytics from anon, authenticated;
+revoke insert, update, delete on public.anugerah_store from anon, authenticated;
+grant select on public.anugerah_store to anon, authenticated;
 
 drop policy if exists "Allow public read anugerah_store" on public.anugerah_store;
 drop policy if exists "Allow public insert update anugerah_store" on public.anugerah_store;
@@ -699,6 +724,7 @@ returns void language plpgsql security definer set search_path = public as $$
 begin
   insert into public.anugerah_analytics (store_id, event_type, label)
   values (coalesce(nullif(trim(p_store_id),''),'main_store'), left(coalesce(nullif(trim(p_event_type),''),'page_view'),40), left(coalesce(p_label,''),120));
+  delete from public.anugerah_analytics where created_at < now() - interval '90 days';
 end; $$;
 grant execute on function public.log_store_event(text, text, text) to anon, authenticated;
 
@@ -715,12 +741,22 @@ begin
 end; $$;
 grant execute on function public.get_store_analytics(text, text) to anon, authenticated;
 
+create or replace function public.get_backend_health()
+returns jsonb language plpgsql security definer set search_path = public, storage as $$
+declare v_rt boolean := false; v_bk boolean := false; v_ws bigint := 0; v_sn bigint := 0;
+begin
+  select exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'anugerah_store') into v_rt;
+  select exists (select 1 from storage.buckets where id = 'anugerah_media' and public = true) into v_bk;
+  select count(*) into v_ws from public.anugerah_store;
+  select count(*) into v_sn from public.anugerah_store_history;
+  return jsonb_build_object('status', 'ok', 'version', '2.2-pro', 'realtime_enabled', v_rt, 'storage_bucket_ready', v_bk, 'workspace_count', v_ws, 'snapshot_count', v_sn, 'server_time', now());
+end; $$;
+grant execute on function public.get_backend_health() to anon, authenticated;
+
 do $$
 begin
-  if not exists (
-    select 1 from pg_publication_tables
-    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'anugerah_store'
-  ) then
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'anugerah_store') then
     alter publication supabase_realtime add table public.anugerah_store;
   end if;
 end $$;
@@ -732,18 +768,23 @@ on conflict (id) do update set public = true, file_size_limit = 10485760;
 drop policy if exists "Public Read anugerah_media" on storage.objects;
 create policy "Public Read anugerah_media" on storage.objects for select to anon, authenticated using (bucket_id = 'anugerah_media');
 drop policy if exists "Public Upload anugerah_media" on storage.objects;
-create policy "Public Upload anugerah_media" on storage.objects for insert to anon, authenticated with check (bucket_id = 'anugerah_media');
+create policy "Public Upload anugerah_media" on storage.objects for insert to anon, authenticated with check (bucket_id = 'anugerah_media' and name ~ '^hd_[0-9]+_[a-z0-9]+\.(webp|png|jpg|jpeg)$');
 drop policy if exists "Public Update anugerah_media" on storage.objects;
-create policy "Public Update anugerah_media" on storage.objects for update to anon, authenticated using (bucket_id = 'anugerah_media');
-drop policy if exists "Public Delete anugerah_media" on storage.objects;
-create policy "Public Delete anugerah_media" on storage.objects for delete to anon, authenticated using (bucket_id = 'anugerah_media');</pre>
+drop policy if exists "Public Delete anugerah_media" on storage.objects;</pre>
                 </div>
+
+                <!-- Panel Diagnostik Kesehatan Backend Supabase -->
+                <div id="sb-health-box" class="hidden rounded-2xl p-3.5 text-xs border bg-slate-50 border-slate-200 space-y-1.5"></div>
             </div>
 
             <div class="flex flex-wrap gap-2.5 pt-2">
                 <button onclick="saveSupabaseConnection()" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-lg transition flex items-center justify-center gap-2">
                     <i class="fas fa-plug"></i>
                     <span>Hubungkan & Aktifkan Realtime</span>
+                </button>
+                <button onclick="checkSupabaseBackendHealth()" class="px-4 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-lg transition flex items-center justify-center gap-2">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>Tes Backend</span>
                 </button>
                 <button onclick="copyBloggerHTML()" class="flex-1 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-lg transition flex items-center justify-center gap-2">
                     <i class="far fa-copy"></i>
@@ -3953,7 +3994,7 @@ create policy "Public Delete anugerah_media" on storage.objects for delete to an
                                 .upload(filePath, finalBlob, {
                                     contentType: outputMime,
                                     cacheControl: "31536000",
-                                    upsert: true
+                                    upsert: false
                                 });
 
                             if (!upErr) {
@@ -4117,165 +4158,167 @@ create policy "Public Delete anugerah_media" on storage.objects for delete to an
                 activeMobileBtn.classList.remove("bg-slate-100", "text-slate-600", "font-bold");
             }
 
+            const mainScroll = document.getElementById("admin-main-scroll");
+            if (mainScroll) mainScroll.scrollTop = 0;
+
             if (tabId === "tab-builder") {
+                renderBuilderAdminUI();
                 loadSupabaseWorkspaces();
                 loadSupabaseSnapshots();
-            }
-            if (tabId === "tab-dashboard") {
+            } else if (tabId === "tab-dashboard") {
+                updateAdminDashboardStats();
                 loadSupabaseAnalytics();
             }
-
-            const mainScroll = document.getElementById("admin-main-scroll");
-            if (mainScroll) mainScroll.scrollTo({ top: 0, behavior: "smooth" });
         }
 
         function showToast(msg, type = "success") {
             const container = document.getElementById("toast-container");
+            if (!container) return;
             const toast = document.createElement("div");
             const bgColor = type === "success" ? "bg-emerald-600" : type === "error" ? "bg-red-600" : "bg-blue-600";
-            toast.className = `flex items-center gap-2 ${bgColor} text-white px-4 py-2 rounded-xl shadow-lg transform transition-all duration-300 translate-y-5 opacity-0 text-sm font-bold`;
-            toast.innerHTML = `<i class="${type === 'success' ? 'fas fa-check-circle' : type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-info-circle'}"></i> <span>${msg}</span>`;
+            const iconClass = type === "success" ? "fas fa-check-circle" : type === "error" ? "fas fa-exclamation-circle" : "fas fa-info-circle";
+            toast.className = `pointer-events-auto flex items-center gap-2 ${bgColor} text-white px-4 py-2.5 rounded-xl shadow-xl transform transition-all duration-300 translate-y-4 opacity-0 text-xs sm:text-sm font-bold max-w-sm`;
+            toast.innerHTML = `<i class="${iconClass}"></i> <span>${escapeHtml(msg)}</span>`;
             container.appendChild(toast);
 
-            setTimeout(() => { toast.classList.remove("translate-y-5", "opacity-0"); }, 10);
-            setTimeout(() => { 
-                toast.classList.add("translate-y-5", "opacity-0");
+            setTimeout(() => { toast.classList.remove("translate-y-4", "opacity-0"); }, 10);
+            setTimeout(() => {
+                toast.classList.add("translate-y-4", "opacity-0");
                 setTimeout(() => { toast.remove(); }, 300);
-            }, 3000);
+            }, 3400);
         }
 
         function openConfirmModal(msg, onConfirm) {
             const modal = document.getElementById("confirm-modal");
-            document.getElementById("confirm-msg").innerText = msg;
+            const msgEl = document.getElementById("confirm-msg");
+            const yesBtn = document.getElementById("confirm-yes-btn");
+            if (!modal || !msgEl || !yesBtn) return;
+            msgEl.innerText = msg || "Apakah Anda yakin?";
             modal.classList.remove("hidden");
             modal.classList.add("flex");
-            document.getElementById("confirm-yes-btn").onclick = () => {
+            yesBtn.onclick = () => {
                 closeConfirmModal();
-                onConfirm();
+                if (typeof onConfirm === "function") onConfirm();
             };
         }
+
         function closeConfirmModal() {
             const modal = document.getElementById("confirm-modal");
+            if (!modal) return;
             modal.classList.add("hidden");
             modal.classList.remove("flex");
         }
 
-        // =====================================================================
-        // SUPABASE CLOUD MODAL, BACKUP/RESTORE JSON & EXPORT BLOGGER
-        // =====================================================================
         function openSupabaseModal() {
-            document.getElementById("sb-url-input").value = sbConfig.url || "";
-            document.getElementById("sb-key-input").value = sbConfig.key || "";
             const modal = document.getElementById("supabase-setup-modal");
+            if (!modal) return;
+            const urlInput = document.getElementById("sb-url-input");
+            const keyInput = document.getElementById("sb-key-input");
+            if (urlInput) urlInput.value = sbConfig.url || "";
+            if (keyInput) keyInput.value = sbConfig.key || "";
             modal.classList.remove("hidden");
             modal.classList.add("flex");
         }
 
         function closeSupabaseModal() {
             const modal = document.getElementById("supabase-setup-modal");
+            if (!modal) return;
             modal.classList.add("hidden");
             modal.classList.remove("flex");
         }
 
         async function saveSupabaseConnection() {
-            const url = document.getElementById("sb-url-input").value.trim();
-            const key = document.getElementById("sb-key-input").value.trim();
+            const url = (document.getElementById("sb-url-input")?.value || "").trim();
+            const key = (document.getElementById("sb-key-input")?.value || "").trim();
             if (!url || !key) {
-                showToast("Masukkan Supabase URL & Anon Key terlebih dahulu!", "error");
+                showToast("Project URL dan Anon Public Key Supabase wajib diisi!", "error");
                 return;
             }
-            sbConfig.url = url;
-            sbConfig.key = key;
+            sbConfig = { url, key };
             try {
                 localStorage.setItem("anugerah_sb_config", JSON.stringify(sbConfig));
             } catch (e) {}
-            closeSupabaseModal();
+
             await connectSupabaseRealtime(url, key, true);
-            await pushToSupabase(true);
+            updateAdminDashboardStats();
+            await checkSupabaseBackendHealth();
+        }
+
+        async function checkSupabaseBackendHealth() {
+            const box = document.getElementById("sb-health-box");
+            const url = (document.getElementById("sb-url-input")?.value || sbConfig.url || "").trim();
+            const key = (document.getElementById("sb-key-input")?.value || sbConfig.key || "").trim();
+
+            if (!url || !key || !window.supabase) {
+                showToast("Isi Project URL & Anon Key Supabase terlebih dahulu.", "info");
+                return;
+            }
+
+            if (box) {
+                box.classList.remove("hidden");
+                box.innerHTML = `<p class="font-bold text-slate-600"><i class="fas fa-spinner fa-spin mr-1"></i> Memeriksa status Backend Supabase...</p>`;
+            }
+
+            try {
+                const tempClient = supabaseClient || window.supabase.createClient(url, key, { auth: { persistSession: false } });
+                const { data, error } = await tempClient.rpc("get_backend_health");
+                if (error || !data) throw error || new Error("RPC get_backend_health belum tersedia");
+
+                if (box) {
+                    box.innerHTML = `
+                        <div class="flex items-center justify-between font-extrabold text-emerald-700">
+                            <span><i class="fas fa-check-circle mr-1"></i> Backend Supabase Sehat (v${escapeHtml(data.version || "2.2-pro")})</span>
+                            <span class="text-[10px] bg-emerald-100 px-2 py-0.5 rounded-full">ONLINE</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+                            <div class="bg-white p-2 rounded-xl border border-slate-200">Realtime: <strong>${data.realtime_enabled ? "Aktif" : "Nonaktif"}</strong></div>
+                            <div class="bg-white p-2 rounded-xl border border-slate-200">Storage CDN: <strong>${data.storage_bucket_ready ? "Siap" : "Belum"}</strong></div>
+                            <div class="bg-white p-2 rounded-xl border border-slate-200">Workspace: <strong>${Number(data.workspace_count || 0)}</strong></div>
+                            <div class="bg-white p-2 rounded-xl border border-slate-200">Snapshot: <strong>${Number(data.snapshot_count || 0)}</strong></div>
+                        </div>
+                    `;
+                }
+                showToast("Backend Supabase terverifikasi sehat & siap Realtime!");
+            } catch (err) {
+                if (box) {
+                    box.innerHTML = `<p class="font-bold text-red-600"><i class="fas fa-times-circle mr-1"></i> Gagal terhubung ke RPC Backend: ${escapeHtml(err.message || "Jalankan SQL Backend v2.2 di SQL Editor Supabase")}</p>`;
+                }
+                showToast("Tes backend gagal: pastikan SQL Backend v2.2 sudah dijalankan.", "error");
+            }
         }
 
         function copySupabaseSQL() {
-            const sqlText = document.getElementById("supabase-sql-code").innerText;
-            const temp = document.createElement("textarea");
-            temp.value = sqlText;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand("copy");
-            temp.remove();
-            showToast("Script SQL Supabase berhasil disalin ke Clipboard!");
+            const sqlEl = document.getElementById("supabase-sql-code");
+            if (!sqlEl) return;
+            navigator.clipboard.writeText(sqlEl.innerText)
+                .then(() => showToast("SQL Backend Supabase berhasil disalin!"))
+                .catch(() => showToast("Gagal menyalin SQL. Silakan salin manual.", "error"));
         }
 
-        function exportBackupJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(storeData, null, 2));
-            const dlAnchor = document.createElement("a");
-            dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", `backup_anugerah_art_${Date.now()}.json`);
-            document.body.appendChild(dlAnchor);
-            dlAnchor.click();
-            dlAnchor.remove();
-            showToast("File Backup JSON berhasil diunduh!");
-        }
-
-        function importRestoreJSON(inputEl) {
-            const file = inputEl.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function (e) {
-                try {
-                    const parsed = JSON.parse(e.target.result);
-                    if (parsed && parsed.settings && parsed.heroProducts) {
-                        storeData = parsed;
-                        renderAll();
-                        renderAdminLists();
-                        populateSettingsForm();
-                        await pushToSupabase(true);
-                        showToast("Data Backup JSON berhasil dipulihkan!");
-                    } else {
-                        showToast("Format file JSON tidak sesuai!", "error");
-                    }
-                } catch (err) {
-                    showToast("Gagal membaca file JSON!", "error");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function buildBloggerReadyHTML() {
-            const urlInput = document.getElementById("sb-url-input");
-            const keyInput = document.getElementById("sb-key-input");
-            const finalUrl = (urlInput && urlInput.value.trim()) || sbConfig.url || "";
-            const finalKey = (keyInput && keyInput.value.trim()) || sbConfig.key || "";
-
-            let htmlContent = document.documentElement.outerHTML;
-            htmlContent = htmlContent.replace(
-                /const DEFAULT_SUPABASE_URL = ".*?";/,
-                `const DEFAULT_SUPABASE_URL = "${finalUrl}";`
-            );
-            htmlContent = htmlContent.replace(
-                /const DEFAULT_SUPABASE_ANON_KEY = ".*?";/,
-                `const DEFAULT_SUPABASE_ANON_KEY = "${finalKey}";`
-            );
-            return "<!DOCTYPE html>\n" + htmlContent;
+        function buildStandaloneBloggerHTML() {
+            const currentUrl = (document.getElementById("sb-url-input")?.value || sbConfig.url || "").trim();
+            const currentKey = (document.getElementById("sb-key-input")?.value || sbConfig.key || "").trim();
+            let fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            fullHtml = fullHtml
+                .replace(/const DEFAULT_SUPABASE_URL = ".*?";/, `const DEFAULT_SUPABASE_URL = "${currentUrl.replace(/"/g, '\\"')}";`)
+                .replace(/const DEFAULT_SUPABASE_ANON_KEY = ".*?";/, `const DEFAULT_SUPABASE_ANON_KEY = "${currentKey.replace(/"/g, '\\"')}";`);
+            return fullHtml;
         }
 
         function copyBloggerHTML() {
-            const fullHtml = buildBloggerReadyHTML();
-            const temp = document.createElement("textarea");
-            temp.value = fullHtml;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand("copy");
-            temp.remove();
-            showToast("Kode HTML Frontend Blogger berhasil disalin! Siap ditempel di Blogger.");
+            const html = buildStandaloneBloggerHTML();
+            navigator.clipboard.writeText(html)
+                .then(() => showToast("Kode HTML Blogger Fullpage siap copas berhasil disalin!"))
+                .catch(() => showToast("Gagal menyalin otomatis. Gunakan tombol Download File HTML.", "info"));
         }
 
         function downloadBloggerHTML() {
-            const fullHtml = buildBloggerReadyHTML();
-            const blob = new Blob([fullHtml], { type: "text/html;charset=utf-8" });
+            const html = buildStandaloneBloggerHTML();
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "percetakan_anugerah_art_blogger_supabase.html";
+            a.download = "anugerah_art_blogger_fullpage.html";
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -4283,10 +4326,40 @@ create policy "Public Delete anugerah_media" on storage.objects for delete to an
             showToast("File HTML Siap Pasang di Blogger berhasil diunduh!");
         }
 
-        async function postAdminAction(newPinHash = "") {
-            renderAll();
-            renderAdminLists();
-            await pushToSupabase(true, newPinHash);
+        function exportBackupJSON() {
+            const blob = new Blob([JSON.stringify(storeData, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `backup_anugerah_art_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast("Backup JSON katalog & tema berhasil diunduh!");
+        }
+
+        function importRestoreJSON(inputEl) {
+            const file = inputEl.files && inputEl.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed || !parsed.settings || !Array.isArray(parsed.heroProducts)) {
+                        throw new Error("Format JSON tidak valid");
+                    }
+                    storeData = parsed;
+                    await postAdminAction();
+                    populateSettingsForm();
+                    showToast("Data berhasil di-restore dari file JSON!");
+                } catch (err) {
+                    showToast("Gagal membaca file backup JSON!", "error");
+                } finally {
+                    inputEl.value = "";
+                }
+            };
+            reader.readAsText(file);
         }
 
         function populateSettingsForm() {
@@ -4300,31 +4373,36 @@ create policy "Public Delete anugerah_media" on storage.objects for delete to an
                 "theme_accent_color", "theme_border_color", "theme_bg_light", "theme_bg_dark",
                 "font_serif", "font_sans"
             ];
-            
             keys.forEach(k => {
                 const el = document.getElementById("set-" + k);
-                if (el && s[k] !== undefined) el.value = s[k];
+                if (el && s[k] !== undefined && s[k] !== null) {
+                    el.value = s[k];
+                }
                 const hexEl = document.getElementById("hex-" + k);
-                if (hexEl && s[k] !== undefined) hexEl.value = s[k];
+                if (hexEl && s[k]) {
+                    hexEl.value = s[k];
+                }
             });
-            const dashWebEl = document.getElementById("dash-website_catalog_url");
-            if (dashWebEl) dashWebEl.value = s.website_catalog_url || "";
-            const dashLynkEl = document.getElementById("dash-catalog_url");
-            if (dashLynkEl) dashLynkEl.value = s.catalog_url || "";
+
+            const dashWeb = document.getElementById("dash-website_catalog_url");
+            if (dashWeb) dashWeb.value = s.website_catalog_url || "";
+            const dashLynk = document.getElementById("dash-catalog_url");
+            if (dashLynk) dashLynk.value = s.catalog_url || "";
+
+            const logoPreview = document.getElementById("set-logo-img-preview");
+            if (logoPreview) logoPreview.src = s.store_logo || "https://placehold.co/200x200/1f0e05/fbbf24?text=LOGO";
+            const ctaPreview = document.getElementById("set-cta-img-preview");
+            if (ctaPreview) ctaPreview.src = s.catalog_cta_image || "https://placehold.co/300x150/2d1608/fbbf24?text=Preview";
+            const patPreview = document.getElementById("set-custom-pattern-preview");
+            if (patPreview) patPreview.src = s.custom_pattern_image || "https://placehold.co/100x100/261205/fbbf24?text=MOTIF";
 
             setAdminColorMode(s.color_mode || "light");
-            if (s.catalog_cta_image) {
-                const previewEl = document.getElementById("set-cta-img-preview");
-                if (previewEl) previewEl.src = s.catalog_cta_image;
-            }
-            if (s.store_logo) {
-                const logoPrev = document.getElementById("set-logo-img-preview");
-                if (logoPrev) logoPrev.src = s.store_logo;
-            }
-            if (s.custom_pattern_image) {
-                const patPrev = document.getElementById("set-custom-pattern-preview");
-                if (patPrev) patPrev.src = s.custom_pattern_image;
-            }
+        }
+
+        async function postAdminAction(newPinHash = "") {
+            renderAll();
+            renderAdminLists();
+            await pushToSupabase(true, newPinHash);
         }
 
         async function saveQuickLinksFromDashboard() {
